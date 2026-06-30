@@ -1,6 +1,6 @@
 namespace TavernLib
 {
-    public class Class1
+    public class Main
     {
     }
 }
