@@ -1,134 +1,132 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
-  <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{3E625713-62F3-4398-92A9-2EE88E6D9E1B}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>TavernLib</RootNamespace>
-    <AssemblyName>TavernLib</AssemblyName>
-    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
-  <ItemGroup>
-    <Reference Include="0Harmony">
-      <HintPath>..\Dependencies\0Harmony.dll</HintPath>
-    </Reference>
-    <Reference Include="Alta.Analytics.Runtime">
-      <HintPath>..\Dependencies\Alta.Analytics.Runtime.dll</HintPath>
-    </Reference>
-    <Reference Include="Alta.Api.Client">
-      <HintPath>..\Dependencies\Alta.Api.Client.dll</HintPath>
-    </Reference>
-    <Reference Include="Alta.Api.DataTransferModels">
-      <HintPath>..\Dependencies\Alta.Api.DataTransferModels.dll</HintPath>
-    </Reference>
-    <Reference Include="Alta.Authentication">
-      <HintPath>..\Dependencies\Alta.Authentication.dll</HintPath>
-    </Reference>
-    <Reference Include="Alta.CommandLine">
-      <HintPath>..\Dependencies\Alta.CommandLine.dll</HintPath>
-    </Reference>
-    <Reference Include="Alta.Core.Runtime">
-      <HintPath>..\Dependencies\Alta.Core.Runtime.dll</HintPath>
-    </Reference>
-    <Reference Include="Alta.IO">
-      <HintPath>..\Dependencies\Alta.IO.dll</HintPath>
-    </Reference>
-    <Reference Include="Alta.NetworkTransport.Runtime">
-      <HintPath>..\Dependencies\Alta.NetworkTransport.Runtime.dll</HintPath>
-    </Reference>
-    <Reference Include="Alta.Platform">
-      <HintPath>..\Dependencies\Alta.Platform.dll</HintPath>
-    </Reference>
-    <Reference Include="Alta.Platform.Generic">
-      <HintPath>..\Dependencies\Alta.Platform.Generic.dll</HintPath>
-    </Reference>
-    <Reference Include="Alta.Serialization.Runtime">
-      <HintPath>..\Dependencies\Alta.Serialization.Runtime.dll</HintPath>
-    </Reference>
-    <Reference Include="Alta.Singletons">
-      <HintPath>..\Dependencies\Alta.Singletons.dll</HintPath>
-    </Reference>
-    <Reference Include="kcp2k">
-      <HintPath>..\Dependencies\kcp2k.dll</HintPath>
-    </Reference>
-    <Reference Include="MelonLoader">
-      <HintPath>..\Dependencies\MelonLoader.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.IdentityModel.Tokens">
-      <HintPath>..\Dependencies\Microsoft.IdentityModel.Tokens.dll</HintPath>
-    </Reference>
-    <Reference Include="MonoMod.ILHelpers">
-      <HintPath>..\Dependencies\MonoMod.ILHelpers.dll</HintPath>
-    </Reference>
-    <Reference Include="MonoMod.RuntimeDetour">
-      <HintPath>..\Dependencies\MonoMod.RuntimeDetour.dll</HintPath>
-    </Reference>
-    <Reference Include="MonoMod.Utils">
-      <HintPath>..\Dependencies\MonoMod.Utils.dll</HintPath>
-    </Reference>
-    <Reference Include="Newtonsoft.Json">
-      <HintPath>..\Dependencies\Newtonsoft.Json.dll</HintPath>
-    </Reference>
-    <Reference Include="Root.Township">
-      <HintPath>..\Dependencies\Root.Township.dll</HintPath>
-    </Reference>
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Xml" />
-    <Reference Include="Unity.InputSystem">
-      <HintPath>..\Dependencies\Unity.InputSystem.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine">
-      <HintPath>..\Dependencies\UnityEngine.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.CoreModule">
-      <HintPath>..\Dependencies\UnityEngine.CoreModule.dll</HintPath>
-    </Reference>
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="Main.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="ServerBrowser\" />
-  </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')"/>
     <PropertyGroup>
-      <ErrorText>This project references NuGet package(s) that are missing on this computer. Enable NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105.The missing file is {0}.</ErrorText>
+        <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+        <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+        <ProjectGuid>{3E625713-62F3-4398-92A9-2EE88E6D9E1B}</ProjectGuid>
+        <OutputType>Library</OutputType>
+        <AppDesignerFolder>Properties</AppDesignerFolder>
+        <RootNamespace>TavernLib</RootNamespace>
+        <AssemblyName>TavernLib</AssemblyName>
+        <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+        <FileAlignment>512</FileAlignment>
+        <LangVersion>9</LangVersion>
     </PropertyGroup>
-    <Error Condition="!Exists('..\packages\ILRepack.2.0.45\build\ILRepack.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\ILRepack.2.0.45\build\ILRepack.props'))" />
-  </Target>
-    <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-         Other similar extension points exist, see Microsoft.Common.targets.
-    <Target Name="BeforeBuild">
-    </Target>
-    <Target Name="AfterBuild">
-    </Target>
-    -->
-
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+        <PlatformTarget>AnyCPU</PlatformTarget>
+        <DebugSymbols>true</DebugSymbols>
+        <DebugType>full</DebugType>
+        <Optimize>false</Optimize>
+        <OutputPath>bin\Debug\</OutputPath>
+        <DefineConstants>DEBUG;TRACE</DefineConstants>
+        <ErrorReport>prompt</ErrorReport>
+        <WarningLevel>4</WarningLevel>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+        <PlatformTarget>AnyCPU</PlatformTarget>
+        <DebugType>pdbonly</DebugType>
+        <Optimize>true</Optimize>
+        <OutputPath>bin\Release\</OutputPath>
+        <DefineConstants>TRACE</DefineConstants>
+        <ErrorReport>prompt</ErrorReport>
+        <WarningLevel>4</WarningLevel>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    </PropertyGroup>
+    <ItemGroup>
+        <Reference Include="0Harmony">
+            <HintPath>..\Dependencies\0Harmony.dll</HintPath>
+        </Reference>
+        <Reference Include="Alta.Analytics.Runtime">
+            <HintPath>..\Dependencies\Alta.Analytics.Runtime.dll</HintPath>
+        </Reference>
+        <Reference Include="Alta.Api.Client">
+            <HintPath>..\Dependencies\Alta.Api.Client.dll</HintPath>
+        </Reference>
+        <Reference Include="Alta.Api.DataTransferModels">
+            <HintPath>..\Dependencies\Alta.Api.DataTransferModels.dll</HintPath>
+        </Reference>
+        <Reference Include="Alta.Authentication">
+            <HintPath>..\Dependencies\Alta.Authentication.dll</HintPath>
+        </Reference>
+        <Reference Include="Alta.CommandLine">
+            <HintPath>..\Dependencies\Alta.CommandLine.dll</HintPath>
+        </Reference>
+        <Reference Include="Alta.Core.Runtime">
+            <HintPath>..\Dependencies\Alta.Core.Runtime.dll</HintPath>
+        </Reference>
+        <Reference Include="Alta.Global.Runtime">
+            <HintPath>..\Dependencies\Alta.Global.Runtime.dll</HintPath>
+        </Reference>
+        <Reference Include="Alta.IO">
+            <HintPath>..\Dependencies\Alta.IO.dll</HintPath>
+        </Reference>
+        <Reference Include="Alta.NetworkTransport.Runtime">
+            <HintPath>..\Dependencies\Alta.NetworkTransport.Runtime.dll</HintPath>
+        </Reference>
+        <Reference Include="Alta.Platform">
+            <HintPath>..\Dependencies\Alta.Platform.dll</HintPath>
+        </Reference>
+        <Reference Include="Alta.Platform.Generic">
+            <HintPath>..\Dependencies\Alta.Platform.Generic.dll</HintPath>
+        </Reference>
+        <Reference Include="Alta.Serialization.Runtime">
+            <HintPath>..\Dependencies\Alta.Serialization.Runtime.dll</HintPath>
+        </Reference>
+        <Reference Include="Alta.Singletons">
+            <HintPath>..\Dependencies\Alta.Singletons.dll</HintPath>
+        </Reference>
+        <Reference Include="kcp2k">
+            <HintPath>..\Dependencies\kcp2k.dll</HintPath>
+        </Reference>
+        <Reference Include="MelonLoader">
+            <HintPath>..\Dependencies\MelonLoader.dll</HintPath>
+        </Reference>
+        <Reference Include="Microsoft.IdentityModel.Tokens">
+            <HintPath>..\Dependencies\Microsoft.IdentityModel.Tokens.dll</HintPath>
+        </Reference>
+        <Reference Include="MonoMod.ILHelpers">
+            <HintPath>..\Dependencies\MonoMod.ILHelpers.dll</HintPath>
+        </Reference>
+        <Reference Include="MonoMod.RuntimeDetour">
+            <HintPath>..\Dependencies\MonoMod.RuntimeDetour.dll</HintPath>
+        </Reference>
+        <Reference Include="MonoMod.Utils">
+            <HintPath>..\Dependencies\MonoMod.Utils.dll</HintPath>
+        </Reference>
+        <Reference Include="Newtonsoft.Json">
+            <HintPath>..\Dependencies\Newtonsoft.Json.dll</HintPath>
+        </Reference>
+        <Reference Include="NLog">
+          <HintPath>..\Dependencies\NLog.dll</HintPath>
+        </Reference>
+        <Reference Include="Root.Township">
+            <HintPath>..\Generated\Root.Township-publicized.dll</HintPath>
+        </Reference>
+        <Reference Include="System"/>
+        <Reference Include="System.Core"/>
+        <Reference Include="System.Data"/>
+        <Reference Include="System.Xml"/>
+        <Reference Include="Unity.InputSystem">
+            <HintPath>..\Dependencies\Unity.InputSystem.dll</HintPath>
+        </Reference>
+        <Reference Include="UnityEngine">
+            <HintPath>..\Dependencies\UnityEngine.dll</HintPath>
+        </Reference>
+        <Reference Include="UnityEngine.CoreModule">
+            <HintPath>..\Dependencies\UnityEngine.CoreModule.dll</HintPath>
+        </Reference>
+        <Reference Include="UnityEngine.IMGUIModule">
+          <HintPath>..\Dependencies\UnityEngine.IMGUIModule.dll</HintPath>
+        </Reference>
+    </ItemGroup>
+    <ItemGroup>
+        <Compile Include="Debugging\DebugHelper.cs" />
+        <Compile Include="Debugging\NLogCatcher.cs" />
+        <Compile Include="TavernCore.cs" />
+        <Compile Include="Properties\AssemblyInfo.cs"/>
+        <Compile Include="ServerBrowser\ServerBrowserPatches.cs"/>
+    </ItemGroup>
+    <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>
 </Project>
