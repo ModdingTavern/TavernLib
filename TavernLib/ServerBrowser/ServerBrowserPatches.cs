@@ -15,6 +15,13 @@ namespace TavernLib.ServerBrowser
             {
                 var serverList = __instance.lastFilteredServers.ToList();
 
+                Tavern.Services.ServerMounter.LoadAllReferences();
+                foreach (var serverReferences in Tavern.Services.ServerMounter.ServerReferences) 
+                    serverList.Add(serverReferences.ServerInfo);
+                
+                serverList.Sort((x, y) => String.CompareOrdinal(x.Name, y.Name));
+                
+                
                 var localServerInfo = MenuSettings.Instance.LocalGameServerInfo(0);
                 localServerInfo.Description = "This is your own local server, make sure it's running before you try to join!";
                 localServerInfo.OnlinePlayers = Array.Empty<UserInfo>();

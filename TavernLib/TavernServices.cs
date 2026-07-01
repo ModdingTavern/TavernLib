@@ -6,6 +6,7 @@ namespace TavernLib
     public class TavernServices
     {
         public DebugHelper DebugHelper { get; }
+        public ServerMounter ServerMounter { get; } = new();
 
 
         internal TavernServices()
