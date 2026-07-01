@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using MelonLoader;
 using MelonLoader.Logging;
 using NLog;
 using NLog.Config;
@@ -10,38 +11,33 @@ namespace TavernLib.Debugging
 {
     internal class NLogCatcher
     {
-        private readonly MelonTarget _melonTarget;
-        
-        
+        public MelonTarget Target { get; private set; }
+
+
         public NLogCatcher()
         {
-            _melonTarget = new MelonTarget { Name = "Melon" };
-            var melonRule = new LoggingRule("*", LogLevel.Trace, LogLevel.Fatal, _melonTarget);
+            MelonEvents.OnApplicationLateStart.Subscribe(() =>
+            {
+                Target = new MelonTarget { Name = "Melon" };
+                var melonRule = new LoggingRule("*", LogLevel.Trace, LogLevel.Fatal, Target);
             
-            LogManager.Configuration.AddTarget(_melonTarget.Name, _melonTarget);
-            LogManager.Configuration.LoggingRules.Insert(0, melonRule);
-            LogManager.ReconfigExistingLoggers();
-
-            LogManager.ConfigurationChanged += (sender, args) =>
-            {
-                var newConfig = args.ActivatedConfiguration;
-                if (newConfig == null || newConfig.FindTargetByName("Melon") != null) return;
-
-                newConfig.AddTarget(_melonTarget.Name, _melonTarget);
-                newConfig.LoggingRules.Insert(0, melonRule);
-
+                LogManager.Configuration.AddTarget(Target.Name, Target);
+                LogManager.Configuration.LoggingRules.Insert(0, melonRule);
                 LogManager.ReconfigExistingLoggers();
-            };
-        }
 
-        public void OnGui()
-        {
-            for (int i = 0; i < _melonTarget.LoggingLevels.Count; i++)
-            {
-                var pair = _melonTarget.LoggingLevels.ElementAt(i);
-                _melonTarget.LoggingLevels[pair.Key] = GUILayout.Toggle(pair.Value, pair.Key);
-            }
+                LogManager.ConfigurationChanged += (sender, args) =>
+                {
+                    var newConfig = args.ActivatedConfiguration;
+                    if (newConfig == null || newConfig.FindTargetByName("Melon") != null) return;
+
+                    newConfig.AddTarget(Target.Name, Target);
+                    newConfig.LoggingRules.Insert(0, melonRule);
+
+                    LogManager.ReconfigExistingLoggers();
+                };
+            });
         }
+        
 
 
         public class MelonTarget : TargetWithLayout
@@ -66,13 +62,13 @@ namespace TavernLib.Debugging
                     if (!levelIsEnabled) return;
                     
                     if (logEvent.Level == LogLevel.Trace || logEvent.Level == LogLevel.Info)
-                        TavernCore.Logger.Msg(ColorARGB.CornflowerBlue, msg);
+                        Tavern.Logger.Msg(ColorARGB.CornflowerBlue, msg);
 
                     if (logEvent.Level == LogLevel.Warn || logEvent.Level == LogLevel.Debug)
-                        TavernCore.Logger.Msg(ColorARGB.Yellow, msg);
+                        Tavern.Logger.Msg(ColorARGB.Yellow, msg);
 
                     if (logEvent.Level == LogLevel.Error || logEvent.Level == LogLevel.Fatal)
-                        TavernCore.Logger.Msg(ColorARGB.Red, msg);
+                        Tavern.Logger.Msg(ColorARGB.Red, msg);
                 }
             }
         }
