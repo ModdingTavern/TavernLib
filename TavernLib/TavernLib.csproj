@@ -122,6 +122,7 @@
         </Reference>
     </ItemGroup>
     <ItemGroup>
+        <Compile Include="Cosmetics\CosmeticsPatches.cs" />
         <Compile Include="Debugging\DebugHelper.cs" />
         <Compile Include="Debugging\NLogCatcher.cs" />
         <Compile Include="ServerBrowser\CustomServerReference.cs" />
