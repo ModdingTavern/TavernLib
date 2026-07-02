@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics;
-using System.Threading.Tasks;
 using Alta.Customization;
 using HarmonyLib;
 using MelonLoader.Logging;
