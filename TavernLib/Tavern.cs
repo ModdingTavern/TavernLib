@@ -15,9 +15,7 @@ namespace TavernLib
             Services = new();
         }
         
-        public override void OnLateInitializeMelon() => Setup();
-        
-        private void Setup()
+        public override void OnLateInitializeMelon()
         {
             Logger = LoggerInstance;
         }
