@@ -17,7 +17,6 @@ namespace TavernLib.ServerBrowser
         public void LoadAllReferences()
         {
             var newReferenceList = new List<CustomServerReference>();
-            
             try
             {
                 var directoryInfo = new DirectoryInfo(TavernDirectories.ServerPath);

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Text;
+using Alta.Api.DataTransferModels.Models.Responses;
 
 namespace TavernLib.ServerBrowser
 {
@@ -49,6 +50,7 @@ namespace TavernLib.ServerBrowser
                 ServerInfo = DevGameServerInfo.GetDevServer(ipAddress, 1757, 0);
                 ServerInfo.Description = description;
                 ServerInfo.Name = name;
+                ServerInfo.OnlinePlayers = Array.Empty<UserInfo>();
             }
             catch (Exception e)
             {
