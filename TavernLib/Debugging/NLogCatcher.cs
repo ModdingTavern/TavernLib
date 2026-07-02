@@ -55,6 +55,9 @@ namespace TavernLib.Debugging
 
             protected override void Write(LogEventInfo logEvent)
             {
+                if (logEvent.LoggerName is "Connection" or "MessageDebug" or "SpawingLogger") return;
+                if (logEvent.Message.Contains("Initialize As Server:")) return;
+                
                 string msg = $"[{logEvent.Level}] {Layout.Render(logEvent)}";
 
                 if (LoggingLevels.TryGetValue(logEvent.Level.Name, out bool levelIsEnabled))
