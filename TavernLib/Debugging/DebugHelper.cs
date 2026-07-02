@@ -33,6 +33,13 @@ namespace TavernLib.Debugging
             }
             
             if (GUILayout.Button("Join Local Server")) VrMainMenu.Instance.JoinServer(GameServerInfo.LocalServer);
+            if (GUILayout.Button("Host Local Server"))
+            {
+                var serverAccess = ApiAccess.ApiClient.ServerClient.GetControllableServerAsync(-1);
+                serverAccess.Wait();
+
+                GameModeManager.StartServer(serverAccess.Result, false);
+            }
             
             
             for (int i = 0; i < _logCatcher.Target.LoggingLevels.Count; i++)
