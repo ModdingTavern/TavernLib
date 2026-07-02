@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using Alta.Api.DataTransferModels.Models.Responses;
 using MelonLoader;
 using TavernLib.ServerBrowser;
 using UnityEngine;
@@ -30,6 +31,8 @@ namespace TavernLib.Debugging
 
                 new CustomServerReference(_name, false).Serialize(serverInfo);
             }
+            
+            if (GUILayout.Button("Join Local Server")) VrMainMenu.Instance.JoinServer(GameServerInfo.LocalServer);
             
             
             for (int i = 0; i < _logCatcher.Target.LoggingLevels.Count; i++)
