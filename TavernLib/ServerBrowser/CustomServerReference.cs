@@ -35,8 +35,8 @@ namespace TavernLib.ServerBrowser
                 throw;
             }
         }
-        
-        public void Deserialize()
+
+        private void Deserialize()
         {
             try
             {
