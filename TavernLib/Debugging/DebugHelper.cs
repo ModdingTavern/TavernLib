@@ -17,7 +17,8 @@ namespace TavernLib.Debugging
         }
 
         private string _name, _description, _ipAddress;
-        public void OnGui()
+
+        private void OnGui()
         {
             _name = GUILayout.TextField(_name);
             _description = GUILayout.TextField(_description);
@@ -30,15 +31,6 @@ namespace TavernLib.Debugging
                 serverInfo.Name = _name;
 
                 new CustomServerReference(_name, false).Serialize(serverInfo);
-            }
-            
-            if (GUILayout.Button("Join Local Server")) VrMainMenu.Instance.JoinServer(GameServerInfo.LocalServer);
-            if (GUILayout.Button("Host Local Server"))
-            {
-                var serverAccess = ApiAccess.ApiClient.ServerClient.GetControllableServerAsync(-1);
-                serverAccess.Wait();
-
-                GameModeManager.StartServer(serverAccess.Result, false);
             }
             
             
