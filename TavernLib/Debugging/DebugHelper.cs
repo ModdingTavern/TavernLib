@@ -24,10 +24,16 @@ namespace TavernLib.Debugging
 
         private void OnGui()
         {
+            GUILayout.Label("Server Name");
             _name = GUILayout.TextField(_name);
+            GUILayout.Label("Server Description");
             _description = GUILayout.TextField(_description);
             _automaticIpAddress = GUILayout.Toggle(_automaticIpAddress, "Automatically detect IP");
-            if (!_automaticIpAddress) _ipAddress = GUILayout.TextField(_ipAddress);
+            if (!_automaticIpAddress)
+            {
+                GUILayout.Label("IP Address");
+                _ipAddress = GUILayout.TextField(_ipAddress);
+            }
             
             
             if (GUILayout.Button("Serialize"))
