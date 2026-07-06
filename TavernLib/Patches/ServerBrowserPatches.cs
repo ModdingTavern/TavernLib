@@ -3,7 +3,7 @@ using System.Linq;
 using Alta.Api.DataTransferModels.Models.Responses;
 using HarmonyLib;
 
-namespace TavernLib.ServerBrowser
+namespace TavernLib.Patches
 {
     [HarmonyPatch]
     class ServerBrowserPatches
