@@ -125,6 +125,7 @@
         </Reference>
     </ItemGroup>
     <ItemGroup>
+        <Compile Include="Api\Implementations\ModdedHighLevelApiClient.cs" />
         <Compile Include="Cosmetics\CosmeticsPatches.cs" />
         <Compile Include="Debugging\DebugHelper.cs" />
         <Compile Include="Debugging\NLogCatcher.cs" />
