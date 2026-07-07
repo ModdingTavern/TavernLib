@@ -3,7 +3,7 @@ using Alta.Customization;
 using HarmonyLib;
 using MelonLoader.Logging;
 
-namespace TavernLib.Cosmetics
+namespace TavernLib.Patches
 {
     [HarmonyPatch]
     public class CosmeticsPatches
