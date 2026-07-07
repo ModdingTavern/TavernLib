@@ -129,7 +129,6 @@
         <Compile Include="Cosmetics\CosmeticsPatches.cs" />
         <Compile Include="Debugging\DebugHelper.cs" />
         <Compile Include="Debugging\NLogCatcher.cs" />
-        <Compile Include="Patches\ApiPatches.cs" />
         <Compile Include="Patches\ServerBrowserPatches.cs" />
         <Compile Include="ServerBrowser\CustomServerReference.cs" />
         <Compile Include="ServerBrowser\ServerMounter.cs" />
