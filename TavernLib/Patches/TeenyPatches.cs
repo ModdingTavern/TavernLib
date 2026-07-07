@@ -1,0 +1,195 @@
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
+using System.IO;
+using System.Linq;
+using System.Net;
+using System.Security.Claims;
+using System.Threading.Tasks;
+using Alta.Api.Client.HighLevel;
+using Alta.Api.DataTransferModels.Converters;
+using Alta.Api.DataTransferModels.Models.Responses;
+using Alta.Api.DataTransferModels.Utility;
+using Alta.Customization;
+using Alta.Networking.Servers;
+using Alta.QuickAccessActions;
+using HarmonyLib;
+using JetBrains.Annotations;
+
+namespace TavernLib.Patches
+{
+    [HarmonyPatch]
+    public class TeenyPatches
+    {
+        #region OfflineUserApiClient
+
+        [HarmonyPatch(typeof(OfflineUserApiClient), nameof(OfflineUserApiClient.GetAllCosmeticsPresets)), HarmonyPrefix]
+        public static bool LocalGetAllCosmeticPresets(ref Task<IEnumerable<UserPresetDataInfo>> __result)
+        {
+            var allPresets = new List<UserPresetDataInfo>();
+            try
+            {
+                var presetsDir = Path.Combine(TavernDirectories.ATTSave, "Presets");
+                if (Directory.Exists(presetsDir))
+                {
+                    var files = Directory.GetFiles(presetsDir, "*.preset");
+                    foreach (string preset in files)
+                    {
+                        try
+                        {
+                            var presetId = int.Parse(Path.GetFileNameWithoutExtension(preset));
+                            var presetData = File.ReadAllBytes(preset);
+                            var array2 = new uint[(presetData.Length + 3) / 4];
+                            Buffer.BlockCopy(presetData, 0, array2, 0, presetData.Length);
+                            allPresets.Add(new UserPresetDataInfo
+                            {
+                                PresetId = presetId,
+                                ByteSize = presetData.Length,
+                                Data = array2
+                            });
+                        }
+                        catch (Exception exception)
+                        {
+                            Tavern.Logger.Warning($"Failed to read preset with name {preset}! {exception}");
+                        }
+                    }
+                }
+            }
+            catch (Exception exception)
+            {
+                Tavern.Logger.Error($"Failed to fetch presets! {exception}");
+                __result = Task.FromResult(Array.Empty<UserPresetDataInfo>().AsEnumerable());
+            }
+
+            __result = Task.FromResult((IEnumerable<UserPresetDataInfo>)allPresets);
+
+            return false;
+        }
+
+
+        [HarmonyPatch(typeof(OfflineUserApiClient), nameof(OfflineUserApiClient.CreateCosmeticsPreset))]
+        public static bool LocalCreateCosmeticPreset(int presetId, uint[] data, int byteSize, ref Task<UserPresetDataInfo> __result)
+        {
+            try
+            {
+                string text = Path.Combine(TavernDirectories.ATTSave, "Presets");
+                Directory.CreateDirectory(text);
+                byte[] array = new byte[byteSize];
+                Buffer.BlockCopy(data, 0, array, 0, byteSize);
+                File.WriteAllBytes(Path.Combine(text, presetId + ".preset"), array);
+            }
+            catch (Exception exception)
+            {
+                Tavern.Logger.Error($"Failed to create preset with ID {presetId}! {exception}");
+            }
+
+            __result = Task.FromResult(new UserPresetDataInfo
+            {
+                PresetId = presetId,
+                ByteSize = byteSize,
+                Data = data
+            });
+
+            return false;
+        }
+
+
+        [HarmonyPatch(typeof(OfflineUserApiClient), nameof(OfflineUserApiClient.CreateCosmeticsPreset))]
+        public static bool LocalDeleteCosmeticPreset(int presetId, ref Task __result)
+        {
+            try
+            {
+                string path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "A Township Tale", "presets", presetId + ".preset");
+                if (File.Exists(path))
+                {
+                    File.Delete(path);
+                }
+            }
+            catch (Exception exception)
+            {
+                Tavern.Logger.Error($"Failed to delet preset with ID {presetId}! {exception}");
+            }
+
+            __result = Task.CompletedTask;
+            return false;
+        }
+
+        #endregion
+
+        #region PurchasedList
+
+        [HarmonyPatch(typeof(PurchasedList), nameof(PurchasedList.UpdateCurrentRotation))]
+        public static bool LocalDeleteCosmeticPreset(ref Task __result)
+        {
+            __result = Task.CompletedTask;
+            return false;
+        }
+
+        #endregion
+
+        #region ReturnToMainMenuAction
+
+        [HarmonyPatch(typeof(PurchasedList), nameof(PurchasedList.UpdateCurrentRotation))]
+        public static async Task LocalDeleteCosmeticPreset(ReturnToMainMenuAction __instance)
+        {
+            __instance.ClearOrb();
+            await GameModeManager.StopCurrentModeAsync("return to menu", isReturningToMenu: false);
+            ApplicationManager.ExternalOnApplicationQuit(new ShutdownReason("Player exited", isExpected: true));
+        }
+
+        #endregion
+
+        #region ApplicationStartupManager
+
+        [HarmonyPatch(typeof(ApplicationStartupManager), nameof(ApplicationStartupManager.RunStartupActions)), HarmonyPrefix]
+        public static bool LocalJoinArg()
+        {
+            if (!CommandLineArguments.Contains("/join_local_server")) return true;
+
+            _ = GameModeManager.JoinServer(DevGameServerInfo.GetDevServer(CommandLineArguments.TryGetNextArguments("/dev_server_ip", 1, out var nextArguments2) ? nextArguments2[0] : IPAddress.Loopback.ToString(), 1757, 0));
+            return false;
+        }
+
+        #endregion
+
+        #region ServerConsoleManager
+
+        [HarmonyPatch(typeof(ServerConsoleManager), nameof(ServerConsoleManager.ValidateConsoleToken)), HarmonyPrefix]
+        public static bool ValidateConsoleToken(JwtSecurityToken token, ref Task<bool> __result)
+        {
+            __result = Task.FromResult(token.Claims.FirstOrDefault((Claim c) => c.Type == "Policy" && c.Value == "server_owner") != null);
+            return false;
+        }
+
+        #endregion
+
+        #region ServerPlayerConnectionHandlerOld
+
+        [HarmonyPatch(typeof(ServerPlayerConnectionHandlerOld), nameof(ServerPlayerConnectionHandlerOld.CheckIfPlayerIsAllowedCustom)), HarmonyPrefix]
+        public static bool ValidateConsoleToken(string tokenString, int playerId, ref Task<ServerPlayerConnectionHandlerOld.PlayerJoinResult> __result)
+        {
+            try
+            {
+                var jwtToken = JWTUtility.CreateFromString(tokenString);
+                var value = jwtToken.Claims.First(c => c.Type == "Username").Value;
+                
+                if (int.Parse(jwtToken.Claims.First(c => c.Type == "UserId").Value) != playerId)
+                {
+                    __result = Task.FromResult(ServerPlayerConnectionHandlerOld.PlayerJoinResult.CreateDeniedResult("Token was for a different user"));
+                }
+
+                var result = new UserInfoAndRole(new UserInfo(playerId, value), UserRolesUtility.GetRolesFromIdentityToken(tokenString));
+                __result = Task.FromResult(ServerPlayerConnectionHandlerOld.PlayerJoinResult.CreateSuccessResult(result));
+            }
+            catch (Exception)
+            {
+                __result = Task.FromResult(ServerPlayerConnectionHandlerOld.PlayerJoinResult.CreateDeniedResult("Error reading token"));
+            }
+
+            return false;
+        }
+
+        #endregion
+    }
+}
