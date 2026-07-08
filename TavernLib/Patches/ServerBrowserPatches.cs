@@ -15,9 +15,9 @@ namespace TavernLib.Patches
             {
                 var serverList = __instance.lastFilteredServers.ToList();
 
-                /*Tavern.Services.ServerMounter.LoadAllReferences();
+                Tavern.Services.ServerMounter.LoadAllReferences();
                 foreach (var serverReferences in Tavern.Services.ServerMounter.ServerReferences) 
-                    serverList.Add(serverReferences.ServerInfo);*/
+                    serverList.Add(serverReferences.ServerInfo);
                 
                 serverList.Sort((x, y) => String.CompareOrdinal(x.Name, y.Name));
                 

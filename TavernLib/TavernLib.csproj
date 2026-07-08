@@ -129,6 +129,7 @@
         <Compile Include="Debugging\NLogCatcher.cs" />
         <Compile Include="Patches\CosmeticsPatches.cs" />
         <Compile Include="Patches\ServerBrowserPatches.cs" />
+        <Compile Include="ServerBrowser\CustomServerReference.cs" />
         <Compile Include="ServerBrowser\ServerMounter.cs" />
         <Compile Include="Tavern.cs" />
         <Compile Include="Properties\AssemblyInfo.cs"/>
