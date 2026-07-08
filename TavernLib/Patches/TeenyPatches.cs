@@ -15,7 +15,6 @@ using Alta.Customization;
 using Alta.Networking.Servers;
 using Alta.QuickAccessActions;
 using HarmonyLib;
-using JetBrains.Annotations;
 
 namespace TavernLib.Patches
 {
