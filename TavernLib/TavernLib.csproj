@@ -126,19 +126,29 @@
         <Reference Include="UnityEngine.IMGUIModule">
           <HintPath>..\Dependencies\UnityEngine.IMGUIModule.dll</HintPath>
         </Reference>
+        <Reference Include="YamlDotNet, Version=18.0.0.0, Culture=neutral, PublicKeyToken=ec19458f3c15af5e, processorArchitecture=MSIL">
+          <HintPath>..\packages\YamlDotNet.18.1.0\lib\net47\YamlDotNet.dll</HintPath>
+        </Reference>
     </ItemGroup>
     <ItemGroup>
+        <Compile Include="TavernArgs.cs" />
         <Compile Include="Debugging\DebugHelper.cs" />
         <Compile Include="Debugging\NLogCatcher.cs" />
         <Compile Include="Patches\CosmeticsPatches.cs" />
-        <Compile Include="Patches\ServerBrowserPatches.cs" />
         <Compile Include="Patches\TeenyPatches.cs" />
-        <Compile Include="ServerBrowser\CustomServerReference.cs" />
-        <Compile Include="ServerBrowser\ServerMounter.cs" />
+        <Compile Include="Services\Server\IApiServer.cs" />
+        <Compile Include="Services\Server\ServerEntry.cs" />
+        <Compile Include="Services\Server\MinimalServerConfig.cs" />
+        <Compile Include="Services\Server\ServerConfig.cs" />
+        <Compile Include="Services\ServiceUtils.cs" />
+        <Compile Include="Services\TavernServices.cs" />
         <Compile Include="Tavern.cs" />
         <Compile Include="Properties\AssemblyInfo.cs"/>
         <Compile Include="TavernDirectories.cs" />
-        <Compile Include="TavernServices.cs" />
+    </ItemGroup>
+    <ItemGroup>
+      <None Include="App.config" />
+      <None Include="packages.config" />
     </ItemGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>
 </Project>

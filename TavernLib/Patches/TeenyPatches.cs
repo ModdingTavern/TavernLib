@@ -6,15 +6,20 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Security.Claims;
+using System.Threading;
 using System.Threading.Tasks;
 using Alta.Api.Client.HighLevel;
 using Alta.Api.DataTransferModels.Converters;
 using Alta.Api.DataTransferModels.Models.Responses;
 using Alta.Api.DataTransferModels.Utility;
 using Alta.Customization;
+using Alta.Global;
+using Alta.Networking;
+using Alta.Networking.Scripts.Player;
 using Alta.Networking.Servers;
 using Alta.QuickAccessActions;
 using HarmonyLib;
+using MelonLoader.Logging;
 
 namespace TavernLib.Patches
 {
@@ -67,7 +72,7 @@ namespace TavernLib.Patches
         }
 
 
-        [HarmonyPatch(typeof(OfflineUserApiClient), nameof(OfflineUserApiClient.CreateCosmeticsPreset))]
+        [HarmonyPatch(typeof(OfflineUserApiClient), nameof(OfflineUserApiClient.CreateCosmeticsPreset)), HarmonyPrefix]
         public static bool LocalCreateCosmeticPreset(int presetId, uint[] data, int byteSize, ref Task<UserPresetDataInfo> __result)
         {
             try
@@ -94,7 +99,7 @@ namespace TavernLib.Patches
         }
 
 
-        [HarmonyPatch(typeof(OfflineUserApiClient), nameof(OfflineUserApiClient.CreateCosmeticsPreset))]
+        [HarmonyPatch(typeof(OfflineUserApiClient), nameof(OfflineUserApiClient.CreateCosmeticsPreset)), HarmonyPrefix]
         public static bool LocalDeleteCosmeticPreset(int presetId, ref Task __result)
         {
             try
@@ -121,6 +126,28 @@ namespace TavernLib.Patches
         [HarmonyPatch(typeof(PurchasedList), nameof(PurchasedList.UpdateCurrentRotation))]
         public static bool LocalDeleteCosmeticPreset(ref Task __result)
         {
+            PurchasedList.CurrentOnStore.Clear();
+            PurchasedList.CurrentRotationToSets.Clear();
+            __result = Task.CompletedTask;
+            return false;
+        }
+        
+        [HarmonyPatch(typeof(PurchasedList), nameof(PurchasedList.ValidatePlayersOwnedItems)), HarmonyPrefix]
+        public static bool AlwaysAllowAnyItem(ref Task<bool> __result)
+        {
+            __result = Task.FromResult(true);
+            return false;
+        }
+        
+        [HarmonyPatch(typeof(PurchasedList), nameof(PurchasedList.Refresh)), HarmonyPrefix]
+        public static bool DisallowPaidCosmetics(ref Task __result, PurchasedList __instance)
+        {
+            PurchasedList.Initialize();
+            PurchasedList.owned.Clear();
+            PurchasedList.owned = PurchasedList.owned.Concat(PurchasedList.OwnedByAll).ToHashSet();
+            PurchasedList.available.Clear();
+            PurchasedList.available = PurchasedList.available.Concat(PurchasedList.OwnedByAll).ToHashSet();
+
             __result = Task.CompletedTask;
             return false;
         }
@@ -129,12 +156,13 @@ namespace TavernLib.Patches
 
         #region ReturnToMainMenuAction
 
-        [HarmonyPatch(typeof(PurchasedList), nameof(PurchasedList.UpdateCurrentRotation))]
-        public static async Task LocalDeleteCosmeticPreset(ReturnToMainMenuAction __instance)
+        [HarmonyPatch(typeof(ReturnToMainMenuAction), nameof(ReturnToMainMenuAction.LetGoValid)), HarmonyPrefix]
+        public static bool QuitOnMenuReturn(ReturnToMainMenuAction __instance)
         {
             __instance.ClearOrb();
-            await GameModeManager.StopCurrentModeAsync("return to menu", isReturningToMenu: false);
+            _ = GameModeManager.StopCurrentModeAsync("return to menu", isReturningToMenu: false);
             ApplicationManager.ExternalOnApplicationQuit(new ShutdownReason("Player exited", isExpected: true));
+            return false;
         }
 
         #endregion
@@ -144,9 +172,9 @@ namespace TavernLib.Patches
         [HarmonyPatch(typeof(ApplicationStartupManager), nameof(ApplicationStartupManager.RunStartupActions)), HarmonyPrefix]
         public static bool LocalJoinArg()
         {
-            if (!CommandLineArguments.Contains("/join_local_server")) return true;
+            if (!CommandLineArguments.Contains(TavernArgs.JoinLocalServer)) return true;
 
-            _ = GameModeManager.JoinServer(DevGameServerInfo.GetDevServer(CommandLineArguments.TryGetNextArguments("/dev_server_ip", 1, out var nextArguments2) ? nextArguments2[0] : IPAddress.Loopback.ToString(), 1757, 0));
+            _ = GameModeManager.JoinServer(DevGameServerInfo.GetDevServer(CommandLineArguments.TryGetNextArguments(TavernArgs.DevServerIp, 1, out var nextArguments2) ? nextArguments2[0] : IPAddress.Loopback.ToString(), 1757, 0));
             return false;
         }
 
@@ -186,6 +214,54 @@ namespace TavernLib.Patches
                 __result = Task.FromResult(ServerPlayerConnectionHandlerOld.PlayerJoinResult.CreateDeniedResult("Error reading token"));
             }
 
+            return false;
+        }
+
+        #endregion
+
+        #region Player
+
+        [HarmonyPatch(typeof(Player), nameof(Player.SyncCosmetics)), HarmonyPrefix]
+        public static bool LocalDeleteCosmeticPreset(IPlayer player, Alta.Serialization.Stream stream, Player __instance)
+        {
+            Tavern.Logger.Msg(ColorARGB.Azure, "SyncCosmetics patch!");
+            try
+            {
+                if (stream.IsReadingOnServerNonLocalTest() && !ReferenceEquals(__instance, player))
+                {
+                    Player.logger.Error("[Player] Received message to alter cosmetics from {0} to {1}", player, __instance);
+                    StreamAuthorityHelper.LogUnauthorizedMessage(player);
+                    return false;
+                }
+                if (NetworkSceneManager.IsServer && stream.IsWriting)
+                {
+                    if (__instance.saveData != null && __instance.saveData.CosmeticBytes > 4)
+                    {
+                        Alta.Serialization.StreamWriter writer = stream as Alta.Serialization.StreamWriter;
+                        if (writer != null)
+                        {
+                            Alta.Serialization.StreamReader reader = new Alta.Serialization.StreamReader(__instance.saveData.CosmeticData, __instance.saveData.CosmeticBytes);
+                            int bitCount = __instance.saveData.CosmeticBytes * 8;
+                            for (int b = 0; b < bitCount; b += 32)
+                            {
+                                int remaining = Math.Min(32, bitCount - b);
+                                uint chunk = 0U;
+                                reader.SerializeBits(ref chunk, remaining);
+                                writer.SerializeBits(ref chunk, remaining);
+                            }
+                            return false;
+                        }
+                    }
+                    _ = CustomizationWrapperSerializer.SerializeStreamAsync(__instance.Customization.Cosmetics, stream, false, CancellationToken.None);
+                    return false;
+                }
+                _ = CustomizationWrapperSerializer.SerializeStreamAsync(__instance.Customization.Cosmetics, stream, !NetworkSceneManager.IsServer, CancellationToken.None);
+            }
+            catch (Exception exception)
+            {
+                Player.logger.Error(exception, "[Player] Error syncing customization");
+            }
+            Tavern.Logger.Msg(ColorARGB.Azure, "SyncCosmetics patch done!");
             return false;
         }
 
