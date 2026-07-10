@@ -8,15 +8,20 @@ namespace TavernLib.Services.Api
 {
     public class ApiManager : IApiManager
     {
-        public ApiManager()
-        {
-            TrySetupServerConfig();
-        }
-        
+        public IAuthManager AuthManager { get; private set; }
         public ServerListing ActiveListing { get; private set; }
         
         
-        private void TrySetupServerConfig()
+        public ApiManager()
+        {
+            if (TrySetupServerListing())
+            {
+                AuthManager = new AuthManager(this);
+            }
+        }
+        
+        
+        private bool TrySetupServerListing()
         {
             Tavern.Logger.Msg(ColorARGB.Azure, "Attempting to read server config YAML");
                 
@@ -36,7 +41,7 @@ namespace TavernLib.Services.Api
                 catch (Exception e)
                 {
                     Tavern.Logger.Error($"Error when loading server config! {e}");
-                    throw;
+                    return false;
                 }
             }
 
@@ -47,6 +52,8 @@ namespace TavernLib.Services.Api
 
                 ActiveListing = null;
             }
+
+            return true;
         }
     }
 }
