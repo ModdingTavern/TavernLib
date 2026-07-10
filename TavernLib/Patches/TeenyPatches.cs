@@ -31,43 +31,28 @@ namespace TavernLib.Patches
         [HarmonyPatch(typeof(OfflineUserApiClient), nameof(OfflineUserApiClient.GetAllCosmeticsPresets)), HarmonyPrefix]
         public static bool LocalGetAllCosmeticPresets(ref Task<IEnumerable<UserPresetDataInfo>> __result)
         {
-            var allPresets = new List<UserPresetDataInfo>();
+            List<UserPresetDataInfo> list = new List<UserPresetDataInfo>();
             try
             {
-                var presetsDir = Path.Combine(TavernDirectories.ATTSave, "Presets");
-                if (Directory.Exists(presetsDir))
+                string folder = Path.Combine(TavernDirectories.ATTSave, "presets");
+                if (Directory.Exists(folder))
                 {
-                    var files = Directory.GetFiles(presetsDir, "*.preset");
-                    foreach (string preset in files)
+                    foreach (string file in Directory.GetFiles(folder, "*.preset"))
                     {
                         try
                         {
-                            var presetId = int.Parse(Path.GetFileNameWithoutExtension(preset));
-                            var presetData = File.ReadAllBytes(preset);
-                            var array2 = new uint[(presetData.Length + 3) / 4];
-                            Buffer.BlockCopy(presetData, 0, array2, 0, presetData.Length);
-                            allPresets.Add(new UserPresetDataInfo
-                            {
-                                PresetId = presetId,
-                                ByteSize = presetData.Length,
-                                Data = array2
-                            });
+                            int presetId = int.Parse(Path.GetFileNameWithoutExtension(file));
+                            byte[] bytes = File.ReadAllBytes(file);
+                            uint[] data = new uint[(bytes.Length + 3) / 4];
+                            Buffer.BlockCopy(bytes, 0, data, 0, bytes.Length);
+                            list.Add(new UserPresetDataInfo { PresetId = presetId, ByteSize = bytes.Length, Data = data });
                         }
-                        catch (Exception exception)
-                        {
-                            Tavern.Logger.Warning($"Failed to read preset with name {preset}! {exception}");
-                        }
+                        catch (Exception) { }
                     }
                 }
             }
-            catch (Exception exception)
-            {
-                Tavern.Logger.Error($"Failed to fetch presets! {exception}");
-                __result = Task.FromResult(Array.Empty<UserPresetDataInfo>().AsEnumerable());
-            }
-
-            __result = Task.FromResult((IEnumerable<UserPresetDataInfo>)allPresets);
-
+            catch (Exception) { }
+            __result = Task.FromResult<IEnumerable<UserPresetDataInfo>>(list);
             return false;
         }
 
@@ -77,44 +62,29 @@ namespace TavernLib.Patches
         {
             try
             {
-                string text = Path.Combine(TavernDirectories.ATTSave, "Presets");
-                Directory.CreateDirectory(text);
-                byte[] array = new byte[byteSize];
-                Buffer.BlockCopy(data, 0, array, 0, byteSize);
-                File.WriteAllBytes(Path.Combine(text, presetId + ".preset"), array);
+                string folder = Path.Combine(TavernDirectories.ATTSave, "presets");
+                Directory.CreateDirectory(folder);
+                byte[] bytes = new byte[byteSize];
+                Buffer.BlockCopy(data, 0, bytes, 0, byteSize);
+                File.WriteAllBytes(Path.Combine(folder, presetId + ".preset"), bytes);
             }
-            catch (Exception exception)
-            {
-                Tavern.Logger.Error($"Failed to create preset with ID {presetId}! {exception}");
-            }
-
-            __result = Task.FromResult(new UserPresetDataInfo
-            {
-                PresetId = presetId,
-                ByteSize = byteSize,
-                Data = data
-            });
-
+            catch (Exception) { }
+            
+            __result = Task.FromResult(new UserPresetDataInfo { PresetId = presetId, ByteSize = byteSize, Data = data });
             return false;
         }
 
 
-        [HarmonyPatch(typeof(OfflineUserApiClient), nameof(OfflineUserApiClient.CreateCosmeticsPreset)), HarmonyPrefix]
+        [HarmonyPatch(typeof(OfflineUserApiClient), nameof(OfflineUserApiClient.DeleteCosmeticPreset)), HarmonyPrefix]
         public static bool LocalDeleteCosmeticPreset(int presetId, ref Task __result)
         {
             try
             {
-                string path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "A Township Tale", "presets", presetId + ".preset");
-                if (File.Exists(path))
-                {
-                    File.Delete(path);
-                }
+                string file = Path.Combine(TavernDirectories.ATTSave, "presets", presetId + ".preset");
+                if (File.Exists(file)) File.Delete(file);
             }
-            catch (Exception exception)
-            {
-                Tavern.Logger.Error($"Failed to delet preset with ID {presetId}! {exception}");
-            }
-
+            catch (Exception) { }
+            
             __result = Task.CompletedTask;
             return false;
         }
