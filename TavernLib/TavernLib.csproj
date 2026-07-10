@@ -131,6 +131,7 @@
         </Reference>
     </ItemGroup>
     <ItemGroup>
+        <Compile Include="Authentication\LauncherAuthenticator.cs" />
         <Compile Include="TavernArgs.cs" />
         <Compile Include="Debugging\DebugHelper.cs" />
         <Compile Include="Debugging\NLogCatcher.cs" />

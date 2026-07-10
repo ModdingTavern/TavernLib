@@ -1,7 +1,5 @@
 using System;
 using System.IO;
-using System.Net;
-using kcp2k;
 using MelonLoader;
 using MelonLoader.Logging;
 using TavernLib.Services;
