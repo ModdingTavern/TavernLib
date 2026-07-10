@@ -3,16 +3,17 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using Alta.Api.DataTransferModels.Extensions;
+using UnityEngine;
 
 namespace TavernLib.Services.Server
 {
-    public class ServerEntry : IApiServer
+    public class ServerListing : IApiServer
     {
         private HttpClient _apiClient;
         private ServerConfig _config;
         
         
-        public ServerEntry(ServerConfig config)
+        public ServerListing(ServerConfig config)
         {
             _apiClient = new HttpClient
             {
@@ -22,6 +23,8 @@ namespace TavernLib.Services.Server
 
             _config = config;
             _ = HeartbeatAsync();
+
+            Application.quitting += CloseListing;
         }
         
         
@@ -67,5 +70,10 @@ namespace TavernLib.Services.Server
         }
 
         public async Task PublishDataToApi() => await Ping();
+        
+        public void CloseListing()
+        {
+            throw new NotImplementedException();
+        }
     }
 }

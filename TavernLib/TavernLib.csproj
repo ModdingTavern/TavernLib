@@ -132,13 +132,17 @@
     </ItemGroup>
     <ItemGroup>
         <Compile Include="Authentication\LauncherAuthenticator.cs" />
+        <Compile Include="Services\Api\ApiManager.cs" />
+        <Compile Include="Services\Api\IApiManager.cs" />
+        <Compile Include="Services\Api\IAuthManager.cs" />
+        <Compile Include="Services\IService.cs" />
         <Compile Include="TavernArgs.cs" />
         <Compile Include="Debugging\DebugHelper.cs" />
         <Compile Include="Debugging\NLogCatcher.cs" />
         <Compile Include="Patches\CosmeticsPatches.cs" />
         <Compile Include="Patches\TeenyPatches.cs" />
         <Compile Include="Services\Server\IApiServer.cs" />
-        <Compile Include="Services\Server\ServerEntry.cs" />
+        <Compile Include="Services\Server\ServerListing.cs" />
         <Compile Include="Services\Server\MinimalServerConfig.cs" />
         <Compile Include="Services\Server\ServerConfig.cs" />
         <Compile Include="Services\ServiceUtils.cs" />
