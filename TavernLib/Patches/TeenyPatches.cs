@@ -174,8 +174,17 @@ namespace TavernLib.Patches
         {
             if (!CommandLineArguments.Contains(TavernArgs.JoinLocalServer)) return true;
 
-            _ = GameModeManager.JoinServer(DevGameServerInfo.GetDevServer(CommandLineArguments.TryGetNextArguments(TavernArgs.DevServerIp, 1, out var nextArguments2) ? nextArguments2[0] : IPAddress.Loopback.ToString(), 1757, 0));
+            string ip = CommandLineArguments.TryGetNextArguments(TavernArgs.DevServerIp, 1, out var ipArgs)
+                ? ipArgs[0]
+                : IPAddress.Loopback.ToString();
+
+            int port = CommandLineArguments.TryGetNextArguments(TavernArgs.DevServerPort, 1, out var portArgs) && int.TryParse(portArgs[0], out var parsedPort)
+                ? parsedPort
+                : 1757;
+
+            _ = GameModeManager.JoinServer(DevGameServerInfo.GetDevServer(ip, port, 0));
             return false;
+        }
         }
 
         #endregion
