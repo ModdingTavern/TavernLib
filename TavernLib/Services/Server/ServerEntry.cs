@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Net.Http;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Alta.Api.DataTransferModels.Extensions;
+using Newtonsoft.Json;
+using UnityEngine;
 
 namespace TavernLib.Services.Server
 {
@@ -22,6 +25,8 @@ namespace TavernLib.Services.Server
 
             _config = config;
             _ = HeartbeatAsync();
+
+            Application.quitting += RemoveServerListing;
         }
         
         
@@ -67,5 +72,16 @@ namespace TavernLib.Services.Server
         }
 
         public async Task PublishDataToApi() => await Ping();
+        
+        
+        public void RemoveServerListing()
+        {
+            var payload = new
+            {
+                listing_token = _config.ListingToken
+            };
+            
+            _apiClient.DeleteAsync(ServiceUtils.ServerUri, new HttpClientExtensions.JsonContent(payload));
+        }
     }
 }

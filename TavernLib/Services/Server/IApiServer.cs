@@ -6,5 +6,6 @@ namespace TavernLib.Services.Server
     {
         public Task Ping();
         public Task PublishDataToApi();
+        public void RemoveServerListing();
     }
 }
