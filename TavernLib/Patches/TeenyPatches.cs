@@ -275,5 +275,25 @@ namespace TavernLib.Patches
         }
 
         #endregion
+
+        #region GameServerInfo
+        [HarmonyPatch(typeof(GameServerInfo), nameof(GameServerInfo.LocalGameServerInfo)), HarmonyPostfix]
+        public static void LocalGameServerInfo_Postfix(int sceneIndex, ref GameServerInfo __result)
+        {
+            if (__result is not DevGameServerInfo devInfo) return;
+
+            int port = CommandLineArguments.TryGetNextArguments(TavernArgs.DevServerPort, 1, out var portArgs) && int.TryParse(portArgs[0], out var parsedPort)
+                ? parsedPort
+                : 1757;
+
+            devInfo.ConnectionInfo = new ConnectionInfo
+            {
+                Address = IPAddress.Loopback,
+                GamePort = port
+            };
+
+            __result = devInfo;
+        }
+        #endregion
     }
 }
