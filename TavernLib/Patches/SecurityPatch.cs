@@ -9,7 +9,7 @@ namespace TavernLib.Patches
     [HarmonyPatch]
     public static class SecurityPatch
     {
-        [HarmonyPatch(typeof(ServerPlayerConnectionHandlerOld), nameof(ServerPlayerConnectionHandlerOld)), HarmonyPrefix]
+        [HarmonyPatch(typeof(ServerPlayerConnectionHandlerOld), nameof(ServerPlayerConnectionHandlerOld.CheckApproved)), HarmonyPrefix]
         public static bool RejectFlyCam(Connection connection, Stream stream, ServerPlayerConnectionHandlerOld __instance)
         {
             try
