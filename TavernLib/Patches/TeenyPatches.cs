@@ -20,6 +20,7 @@ using Alta.Networking.Servers;
 using Alta.QuickAccessActions;
 using HarmonyLib;
 using MelonLoader.Logging;
+using UnityEngine;
 
 namespace TavernLib.Patches
 {
@@ -28,7 +29,7 @@ namespace TavernLib.Patches
     {
         #region OfflineUserApiClient
 
-        [HarmonyPatch(typeof(OfflineUserApiClient), nameof(OfflineUserApiClient.GetAllCosmeticsPresets)), HarmonyPrefix]
+        [HarmonyPatch(typeof(UserApiClient), nameof(UserApiClient.GetAllCosmeticsPresets)), HarmonyPrefix]
         public static bool LocalGetAllCosmeticPresets(ref Task<IEnumerable<UserPresetDataInfo>> __result)
         {
             List<UserPresetDataInfo> list = new List<UserPresetDataInfo>();
@@ -57,7 +58,7 @@ namespace TavernLib.Patches
         }
 
 
-        [HarmonyPatch(typeof(OfflineUserApiClient), nameof(OfflineUserApiClient.CreateCosmeticsPreset)), HarmonyPrefix]
+        [HarmonyPatch(typeof(UserApiClient), nameof(UserApiClient.CreateCosmeticsPreset)), HarmonyPrefix]
         public static bool LocalCreateCosmeticPreset(int presetId, uint[] data, int byteSize, ref Task<UserPresetDataInfo> __result)
         {
             try
@@ -75,7 +76,7 @@ namespace TavernLib.Patches
         }
 
 
-        [HarmonyPatch(typeof(OfflineUserApiClient), nameof(OfflineUserApiClient.DeleteCosmeticPreset)), HarmonyPrefix]
+        [HarmonyPatch(typeof(UserApiClient), nameof(UserApiClient.DeleteCosmeticPreset)), HarmonyPrefix]
         public static bool LocalDeleteCosmeticPreset(int presetId, ref Task __result)
         {
             try
