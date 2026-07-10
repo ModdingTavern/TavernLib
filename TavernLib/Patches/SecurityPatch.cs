@@ -9,30 +9,37 @@ namespace TavernLib.Patches
     [HarmonyPatch]
     public static class SecurityPatch
     {
-        [HarmonyPatch(typeof(ServerPlayerConnectionHandlerOld), nameof(ServerPlayerConnectionHandlerOld.CheckApproved)), HarmonyPrefix]
-        public static bool RejectFlyCam(Connection connection, Stream stream, ServerPlayerConnectionHandlerOld __instance)
+        [HarmonyPatch(typeof(ServerPlayerConnectionHandlerOld), nameof(ServerPlayerConnectionHandlerOld.InitializeConnection)), HarmonyPrefix]
+        public static bool FlyCamFilter(Connection connection)
+        {
+            connection.SetHandler(MessageType.RequestJoin, FilterFlyCam);
+            return false;
+        }
+        
+        private static async void FilterFlyCam(Connection connection, Stream stream)
         {
             try
             {
                 using var readingStream = stream.Clone() as Stream;
 
                 var requestJoinMessage = new RequestJoinMessage();
-                requestJoinMessage.Serialize(connection, stream);
+                requestJoinMessage.Serialize(connection, readingStream);
 
                 if (requestJoinMessage.PlayerMode is PlayerMode.Fly or PlayerMode.AutoCam or PlayerMode.Unassigned)
                 {
-                    _ = ServerPlayerConnectionHandlerOld.PlayerDenied(connection, "Bizarre mode detected.");
-                    return false;
+                    Tavern.Logger.Warning($"User kicked for bizarre mode");
+                    await ServerPlayerConnectionHandlerOld.PlayerDenied(connection, "Bizarre mode detected.");
+                    return;
                 }
             }
             catch (Exception e)
             {
                 Tavern.Logger.Error($"Error in SecurityPatch {e}");
-                _ = ServerPlayerConnectionHandlerOld.PlayerDenied(connection, "Unhandled error.");
-                throw;
+                await ServerPlayerConnectionHandlerOld.PlayerDenied(connection, "Unhandled error.");
+                return;
             }
-
-            return true;
+            
+            ServerHandler.Current.playerJoinHandler.CheckApproved(connection, stream);
         }
     }
 }
