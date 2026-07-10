@@ -185,7 +185,6 @@ namespace TavernLib.Patches
             _ = GameModeManager.JoinServer(DevGameServerInfo.GetDevServer(ip, port, 0));
             return false;
         }
-        }
 
         #endregion
 
@@ -277,7 +276,7 @@ namespace TavernLib.Patches
         #endregion
 
         #region GameServerInfo
-        [HarmonyPatch(typeof(GameServerInfo), nameof(GameServerInfo.LocalGameServerInfo)), HarmonyPostfix]
+        [HarmonyPatch(typeof(MenuSettings), nameof(MenuSettings.LocalGameServerInfo)), HarmonyPostfix]
         public static void LocalGameServerInfo_Postfix(int sceneIndex, ref GameServerInfo __result)
         {
             if (__result is not DevGameServerInfo devInfo) return;
