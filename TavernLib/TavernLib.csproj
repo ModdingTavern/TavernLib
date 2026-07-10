@@ -131,6 +131,7 @@
         </Reference>
     </ItemGroup>
     <ItemGroup>
+        <Compile Include="Patches\SecurityPatch.cs" />
         <Compile Include="TavernArgs.cs" />
         <Compile Include="Debugging\DebugHelper.cs" />
         <Compile Include="Debugging\NLogCatcher.cs" />
