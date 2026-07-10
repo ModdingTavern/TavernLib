@@ -131,7 +131,6 @@
         </Reference>
     </ItemGroup>
     <ItemGroup>
-        <Compile Include="Authentication\LauncherAuthenticator.cs" />
         <Compile Include="Services\Api\ApiManager.cs" />
         <Compile Include="Services\Api\AuthManager.cs" />
         <Compile Include="Services\Api\IApiManager.cs" />
