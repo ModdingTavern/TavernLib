@@ -174,7 +174,7 @@ namespace TavernLib.Patches
         {
             if (!CommandLineArguments.Contains(TavernArgs.JoinLocalServer)) return true;
 
-            _ = GameModeManager.JoinServer(DevGameServerInfo.GetDevServer(CommandLineArguments.TryGetNextArguments(TavernArgs.DevServerIp, 1, out var nextArguments2) ? nextArguments2[0] : IPAddress.Loopback.ToString(), TavernArgs.DevServerPort, 0));
+            _ = GameModeManager.JoinServer(DevGameServerInfo.GetDevServer(CommandLineArguments.TryGetNextArguments(TavernArgs.DevServerIp, 1, out var nextArguments2) ? nextArguments2[0] : IPAddress.Loopback.ToString(), 1757, 0));
             return false;
         }
 
