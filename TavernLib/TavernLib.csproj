@@ -138,7 +138,7 @@
         <Compile Include="Patches\CosmeticsPatches.cs" />
         <Compile Include="Patches\TeenyPatches.cs" />
         <Compile Include="Services\Server\IApiServer.cs" />
-        <Compile Include="Services\Server\ServerEntry.cs" />
+        <Compile Include="Services\Server\ServerListing.cs" />
         <Compile Include="Services\Server\MinimalServerConfig.cs" />
         <Compile Include="Services\Server\ServerConfig.cs" />
         <Compile Include="Services\ServiceUtils.cs" />

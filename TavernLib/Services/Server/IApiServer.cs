@@ -5,7 +5,7 @@ namespace TavernLib.Services.Server
     public interface IApiServer
     {
         public Task Ping();
-        public Task PublishDataToApi();
-        public void RemoveServerListing();
+        public Task OpenListing();
+        public void CloseListing();
     }
 }

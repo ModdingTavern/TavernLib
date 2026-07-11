@@ -42,7 +42,7 @@ namespace TavernLib
                     var output = deserializer.Deserialize<ServerConfig>(data);
 
                     Logger.Msg(ColorARGB.Azure, "Instantiating server entry for API");
-                    TavernServices.ActiveEntry = new ServerEntry(output);
+                    TavernServices.ActiveListing = new ServerListing(output);
                 }
                     
                 catch (Exception e)

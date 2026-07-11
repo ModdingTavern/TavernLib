@@ -9,13 +9,13 @@ using UnityEngine;
 
 namespace TavernLib.Services.Server
 {
-    public class ServerEntry : IApiServer
+    public class ServerListing : IApiServer
     {
         private HttpClient _apiClient;
         private ServerConfig _config;
         
         
-        public ServerEntry(ServerConfig config)
+        public ServerListing(ServerConfig config)
         {
             _apiClient = new HttpClient
             {
@@ -26,7 +26,7 @@ namespace TavernLib.Services.Server
             _config = config;
             _ = HeartbeatAsync();
 
-            Application.quitting += RemoveServerListing;
+            Application.quitting += CloseListing;
         }
         
         
@@ -34,7 +34,7 @@ namespace TavernLib.Services.Server
         {
             try
             {
-                await PublishDataToApi();
+                await OpenListing();
             }
             catch (Exception e)
             {
@@ -71,10 +71,10 @@ namespace TavernLib.Services.Server
             }
         }
 
-        public async Task PublishDataToApi() => await Ping();
+        public async Task OpenListing() => await Ping();
         
         
-        public void RemoveServerListing()
+        public void CloseListing()
         {
             var payload = new
             {

@@ -6,7 +6,7 @@ namespace TavernLib.Services
     public static class TavernServices
     {
         public static DebugHelper DebugHelper { get; private set; }
-        public static ServerEntry ActiveEntry { get; set; }
+        public static ServerListing ActiveListing { get; set; }
 
 
         internal static void Init()
