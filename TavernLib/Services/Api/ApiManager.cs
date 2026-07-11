@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using MelonLoader.Logging;
+using TavernLib.Services.Auth;
 using TavernLib.Services.Server;
 using YamlDotNet.Serialization;
 

@@ -10,7 +10,7 @@ namespace TavernLib.Services.Server
     public class ServerListing : IApiServer
     {
         private HttpClient _apiClient;
-        private ServerConfig _config;
+        public readonly ServerConfig _config;
         
         
         public ServerListing(ServerConfig config)

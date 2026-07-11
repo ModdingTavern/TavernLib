@@ -1,4 +1,4 @@
-﻿namespace TavernLib.Services.Api
+﻿namespace TavernLib.Services.Auth
 {
     public interface IAuthManager
     {
