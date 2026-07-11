@@ -131,6 +131,12 @@
         </Reference>
     </ItemGroup>
     <ItemGroup>
+        <Compile Include="Services\Api\ApiManager.cs" />
+        <Compile Include="Services\Api\IApiManager.cs" />
+        <Compile Include="Services\Auth\AuthManager.cs" />
+        <Compile Include="Services\Auth\AuthPayloads.cs" />
+        <Compile Include="Services\Auth\IAuthManager.cs" />
+        <Compile Include="Services\IService.cs" />
         <Compile Include="Patches\SecurityPatch.cs" />
         <Compile Include="TavernArgs.cs" />
         <Compile Include="Debugging\DebugHelper.cs" />

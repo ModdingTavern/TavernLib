@@ -1,10 +1,11 @@
 ﻿using System.Linq;
 using MelonLoader;
+using TavernLib.Services;
 using UnityEngine;
 
 namespace TavernLib.Debugging
 {
-    public class DebugHelper
+    public class DebugHelper : IService
     {
         private readonly NLogCatcher _logCatcher = new();
 

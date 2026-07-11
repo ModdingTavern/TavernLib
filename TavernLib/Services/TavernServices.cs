@@ -1,17 +1,33 @@
-﻿using TavernLib.Debugging;
+﻿using System;
+using System.Collections.Generic;
+using MelonLoader.Logging;
+using TavernLib.Debugging;
 using TavernLib.Services.Server;
 
 namespace TavernLib.Services
 {
     public static class TavernServices
     {
-        public static DebugHelper DebugHelper { get; private set; }
-        public static ServerListing ActiveListing { get; set; }
+        private static readonly Dictionary<Type, IService> ServiceEntries = new();
 
 
-        internal static void Init()
+        public static void AddService<T>(T instance) where T : IService
         {
-            if (CommandLineArguments.Contains("/debug_helper")) DebugHelper = new();
+            if (ServiceEntries.ContainsKey(typeof(T)))
+            {
+                Tavern.Logger.Msg(ColorARGB.Bisque, "Cannot add multiple services of the same type!");
+                return;
+            }
+
+            ServiceEntries[typeof(T)] = instance;
+        }
+        
+        public static IService GetService<T>() where T : IService
+        {
+            if (ServiceEntries.TryGetValue(typeof(T), out var result)) return result;
+            
+            Tavern.Logger.Error($"Service of type {nameof(T)} was not found!");
+            return null;
         }
     }
 }
