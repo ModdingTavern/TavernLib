@@ -1,13 +1,10 @@
 ﻿using System;
 using System.Net.Http;
-using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using Alta.Api.DataTransferModels.Extensions;
-using Newtonsoft.Json;
 using UnityEngine;
 
-namespace TavernLib.Services.Server
+namespace TavernLib.Backend.Server
 {
     public class ServerListing : IApiServer
     {
@@ -19,7 +16,7 @@ namespace TavernLib.Services.Server
         {
             _apiClient = new HttpClient
             {
-                BaseAddress = new Uri(ServiceUtils.TavernApi),
+                BaseAddress = new Uri(BackendUtils.TavernApi),
                 Timeout = TimeSpan.FromSeconds(6)
             };
 
@@ -62,7 +59,7 @@ namespace TavernLib.Services.Server
             try
             {
                 var minimalConfig = MinimalServerConfig.FromServerConfig(_config);
-                await _apiClient.PostAsync(ServiceUtils.ServerUri, new HttpClientExtensions.JsonContent(minimalConfig));
+                await _apiClient.PostAsync(BackendUtils.ServerUri, new HttpClientExtensions.JsonContent(minimalConfig));
             }
             catch (Exception e)
             {
@@ -81,7 +78,7 @@ namespace TavernLib.Services.Server
                 listing_token = _config.ListingToken
             };
             
-            _apiClient.DeleteAsync(ServiceUtils.ServerUri, new HttpClientExtensions.JsonContent(payload));
+            _apiClient.DeleteAsync(BackendUtils.ServerUri, new HttpClientExtensions.JsonContent(payload));
         }
     }
 }

@@ -2,10 +2,9 @@ using System;
 using System.IO;
 using MelonLoader;
 using MelonLoader.Logging;
+using TavernLib.Backend.Api;
 using TavernLib.Debugging;
 using TavernLib.Services;
-using TavernLib.Services.Api;
-using TavernLib.Services.Server;
 using YamlDotNet.Serialization;
 
 
@@ -32,7 +31,7 @@ namespace TavernLib
                 
                 if (CommandLineArguments.Contains(CommandLineArguments.StartServerArgument))
                 {
-                    if (!CommandLineArguments.Contains(TavernArgs.NoApi)) TavernServices.AddService(new ApiManager());
+                    if (!CommandLineArguments.Contains(TavernArgs.DontManageApi)) TavernServices.AddService(new TavernApiManager());
                 }
 
             }

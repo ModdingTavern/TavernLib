@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using YamlDotNet.Serialization;
 
-namespace TavernLib.Services.Server
+namespace TavernLib.Backend.Server
 {
     public class ServerConfig
     {

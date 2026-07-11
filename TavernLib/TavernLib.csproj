@@ -131,11 +131,16 @@
         </Reference>
     </ItemGroup>
     <ItemGroup>
-        <Compile Include="Services\Api\ApiManager.cs" />
-        <Compile Include="Services\Api\IApiManager.cs" />
-        <Compile Include="Services\Auth\AuthManager.cs" />
-        <Compile Include="Services\Auth\AuthPayloads.cs" />
-        <Compile Include="Services\Auth\IAuthManager.cs" />
+        <Compile Include="Backend\Api\TavernApiManager.cs" />
+        <Compile Include="Backend\Api\IApiManager.cs" />
+        <Compile Include="Backend\Auth\AuthManager.cs" />
+        <Compile Include="Backend\Auth\AuthPayloads.cs" />
+        <Compile Include="Backend\Auth\IAuthManager.cs" />
+        <Compile Include="Backend\Server\IApiServer.cs" />
+        <Compile Include="Backend\Server\MinimalServerConfig.cs" />
+        <Compile Include="Backend\Server\ServerConfig.cs" />
+        <Compile Include="Backend\Server\ServerListing.cs" />
+        <Compile Include="Backend\BackendUtils.cs" />
         <Compile Include="Services\IService.cs" />
         <Compile Include="Patches\SecurityPatch.cs" />
         <Compile Include="TavernArgs.cs" />
@@ -143,11 +148,6 @@
         <Compile Include="Debugging\NLogCatcher.cs" />
         <Compile Include="Patches\CosmeticsPatches.cs" />
         <Compile Include="Patches\TeenyPatches.cs" />
-        <Compile Include="Services\Server\IApiServer.cs" />
-        <Compile Include="Services\Server\ServerListing.cs" />
-        <Compile Include="Services\Server\MinimalServerConfig.cs" />
-        <Compile Include="Services\Server\ServerConfig.cs" />
-        <Compile Include="Services\ServiceUtils.cs" />
         <Compile Include="Services\TavernServices.cs" />
         <Compile Include="Tavern.cs" />
         <Compile Include="Properties\AssemblyInfo.cs"/>

@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 
-namespace TavernLib.Services.Server
+namespace TavernLib.Backend.Server
 {
     public class MinimalServerConfig
     {

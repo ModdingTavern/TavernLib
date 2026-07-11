@@ -1,6 +1,7 @@
-﻿using TavernLib.Services.Server;
+﻿using TavernLib.Backend.Server;
+using TavernLib.Services;
 
-namespace TavernLib.Services.Api
+namespace TavernLib.Backend.Api
 {
     public interface IApiManager : IService
     {

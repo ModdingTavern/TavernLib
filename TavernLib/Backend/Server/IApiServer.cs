@@ -1,6 +1,6 @@
 ﻿using System.Threading.Tasks;
 
-namespace TavernLib.Services.Server
+namespace TavernLib.Backend.Server
 {
     public interface IApiServer
     {

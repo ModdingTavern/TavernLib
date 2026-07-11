@@ -2,7 +2,7 @@
 using Alta.Networking.Servers;
 using Newtonsoft.Json;
 
-namespace TavernLib.Services.Auth
+namespace TavernLib.Backend.Auth
 {
     public static class AuthPayloads
     {

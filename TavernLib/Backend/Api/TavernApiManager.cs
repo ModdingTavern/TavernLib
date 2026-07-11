@@ -1,19 +1,19 @@
 ﻿using System;
 using System.IO;
 using MelonLoader.Logging;
-using TavernLib.Services.Auth;
-using TavernLib.Services.Server;
+using TavernLib.Backend.Auth;
+using TavernLib.Backend.Server;
 using YamlDotNet.Serialization;
 
-namespace TavernLib.Services.Api
+namespace TavernLib.Backend.Api
 {
-    public class ApiManager : IApiManager
+    public class TavernApiManager : IApiManager
     {
         public IAuthManager AuthManager { get; private set; }
         public ServerListing ActiveListing { get; private set; }
         
         
-        public ApiManager()
+        public TavernApiManager()
         {
             if (TrySetupServerListing())
             {
