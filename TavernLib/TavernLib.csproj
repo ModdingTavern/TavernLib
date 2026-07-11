@@ -132,10 +132,8 @@
     </ItemGroup>
     <ItemGroup>
         <Compile Include="Backend\Api\TavernApiManager.cs" />
-        <Compile Include="Backend\Api\IApiManager.cs" />
         <Compile Include="Backend\Auth\AuthManager.cs" />
         <Compile Include="Backend\Auth\AuthPayloads.cs" />
-        <Compile Include="Backend\Auth\IAuthManager.cs" />
         <Compile Include="Backend\Server\IApiServer.cs" />
         <Compile Include="Backend\Server\MinimalServerConfig.cs" />
         <Compile Include="Backend\Server\ServerConfig.cs" />

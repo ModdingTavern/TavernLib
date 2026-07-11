@@ -3,26 +3,27 @@ using System.IO;
 using MelonLoader.Logging;
 using TavernLib.Backend.Auth;
 using TavernLib.Backend.Server;
+using TavernLib.Services;
 using YamlDotNet.Serialization;
 
 namespace TavernLib.Backend.Api
 {
-    public class TavernApiManager : IApiManager
+    public class TavernApiManager : IService
     {
-        public IAuthManager AuthManager { get; private set; }
+        internal AuthManager AuthManager { get; private set; }
         public ServerListing ActiveListing { get; private set; }
         
         
         public TavernApiManager()
         {
-            if (TrySetupServerListing())
+            if (TryCreateServerListing())
             {
                 AuthManager = new AuthManager(this);
             }
         }
         
         
-        private bool TrySetupServerListing()
+        private bool TryCreateServerListing()
         {
             Tavern.Logger.Msg(ColorARGB.Azure, "Attempting to read server config YAML");
                 
@@ -30,12 +31,11 @@ namespace TavernLib.Backend.Api
             {
                 try
                 {
-                    string data = File.ReadAllText(TavernDirectories.ServerConfig);
-                        
+                    var data = File.ReadAllText(TavernDirectories.ServerConfig);
                     var deserializer = new DeserializerBuilder().Build();
                     var output = deserializer.Deserialize<ServerConfig>(data);
 
-                    Tavern.Logger.Msg(ColorARGB.Azure, "Instantiating server entry for API");
+                    Tavern.Logger.Msg(ColorARGB.Azure, "Instantiating server entry for TavernApiManager");
                     ActiveListing = new ServerListing(output);
                 }
                     

@@ -11,16 +11,15 @@ using TavernLib.Backend.Api;
 
 namespace TavernLib.Backend.Auth
 {
-    public class AuthManager : IAuthManager
+    internal class AuthManager
     {
-        private IApiManager _manager;
+        private TavernApiManager _manager;
         private TcpListener _listener;
 
 
-        public AuthManager(IApiManager manager)
+        public AuthManager(TavernApiManager manager)
         {
             _manager = manager;
-
             _listener = new(IPAddress.Any, 1762);
 
             _ = StartAuthCycle();

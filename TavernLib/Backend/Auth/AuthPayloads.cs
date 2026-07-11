@@ -4,7 +4,7 @@ using Newtonsoft.Json;
 
 namespace TavernLib.Backend.Auth
 {
-    public static class AuthPayloads
+    internal static class AuthPayloads
     {
         public struct PingRequest
         {
