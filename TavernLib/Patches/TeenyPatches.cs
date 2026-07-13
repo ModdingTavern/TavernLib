@@ -265,5 +265,13 @@ namespace TavernLib.Patches
             __result = devInfo;
         }
         #endregion
+
+        #region ApiAccess
+        [HarmonyPatch(typeof(ApiAccess), nameof(ApiAccess.IsConnectedToInternetInternal)), HarmonyPostfix]
+        public static void IsConnectedToInternetInternal_Postfix(ref bool __result)
+        {
+            __result = true;
+        }
+        #endregion
     }
 }

@@ -1,161 +1,162 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-    <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')"/>
-    <PropertyGroup>
-        <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-        <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-        <ProjectGuid>{3E625713-62F3-4398-92A9-2EE88E6D9E1B}</ProjectGuid>
-        <OutputType>Library</OutputType>
-        <AppDesignerFolder>Properties</AppDesignerFolder>
-        <RootNamespace>TavernLib</RootNamespace>
-        <AssemblyName>TavernLib</AssemblyName>
-        <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
-        <FileAlignment>512</FileAlignment>
-        <LangVersion>9</LangVersion>
-    </PropertyGroup>
-    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-        <PlatformTarget>AnyCPU</PlatformTarget>
-        <DebugSymbols>true</DebugSymbols>
-        <DebugType>full</DebugType>
-        <Optimize>false</Optimize>
-        <OutputPath>bin\Debug\</OutputPath>
-        <DefineConstants>DEBUG;TRACE</DefineConstants>
-        <ErrorReport>prompt</ErrorReport>
-        <WarningLevel>4</WarningLevel>
-        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    </PropertyGroup>
-    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-        <PlatformTarget>AnyCPU</PlatformTarget>
-        <DebugType>pdbonly</DebugType>
-        <Optimize>true</Optimize>
-        <OutputPath>bin\Release\</OutputPath>
-        <DefineConstants>TRACE</DefineConstants>
-        <ErrorReport>prompt</ErrorReport>
-        <WarningLevel>4</WarningLevel>
-        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    </PropertyGroup>
-    <ItemGroup>
-        <Reference Include="0Harmony">
-            <HintPath>..\Dependencies\0Harmony.dll</HintPath>
-        </Reference>
-        <Reference Include="Alta.Analytics.Runtime">
-            <HintPath>..\Dependencies\Alta.Analytics.Runtime.dll</HintPath>
-        </Reference>
-        <Reference Include="Alta.Api.Client">
-            <HintPath>..\Dependencies\Alta.Api.Client.dll</HintPath>
-        </Reference>
-        <Reference Include="Alta.Api.DataTransferModels">
-            <HintPath>..\Dependencies\Alta.Api.DataTransferModels.dll</HintPath>
-        </Reference>
-        <Reference Include="Alta.Authentication">
-            <HintPath>..\Dependencies\Alta.Authentication.dll</HintPath>
-        </Reference>
-        <Reference Include="Alta.CommandLine">
-            <HintPath>..\Dependencies\Alta.CommandLine.dll</HintPath>
-        </Reference>
-        <Reference Include="Alta.Core.Runtime">
-            <HintPath>..\Dependencies\Alta.Core.Runtime.dll</HintPath>
-        </Reference>
-        <Reference Include="Alta.Global.Runtime">
-            <HintPath>..\Dependencies\Alta.Global.Runtime.dll</HintPath>
-        </Reference>
-        <Reference Include="Alta.IO">
-            <HintPath>..\Dependencies\Alta.IO.dll</HintPath>
-        </Reference>
-        <Reference Include="Alta.NetworkTransport.Runtime">
-            <HintPath>..\Dependencies\Alta.NetworkTransport.Runtime.dll</HintPath>
-        </Reference>
-        <Reference Include="Alta.Platform">
-            <HintPath>..\Dependencies\Alta.Platform.dll</HintPath>
-        </Reference>
-        <Reference Include="Alta.Platform.Generic">
-            <HintPath>..\Dependencies\Alta.Platform.Generic.dll</HintPath>
-        </Reference>
-        <Reference Include="Alta.Serialization.Runtime">
-            <HintPath>..\Dependencies\Alta.Serialization.Runtime.dll</HintPath>
-        </Reference>
-        <Reference Include="Alta.Singletons">
-            <HintPath>..\Dependencies\Alta.Singletons.dll</HintPath>
-        </Reference>
-        <Reference Include="kcp2k">
-            <HintPath>..\Dependencies\kcp2k.dll</HintPath>
-        </Reference>
-        <Reference Include="MelonLoader">
-            <HintPath>..\Dependencies\MelonLoader.dll</HintPath>
-        </Reference>
-        <Reference Include="Microsoft.IdentityModel.Tokens">
-            <HintPath>..\Dependencies\Microsoft.IdentityModel.Tokens.dll</HintPath>
-        </Reference>
-        <Reference Include="MonoMod.ILHelpers">
-            <HintPath>..\Dependencies\MonoMod.ILHelpers.dll</HintPath>
-        </Reference>
-        <Reference Include="MonoMod.RuntimeDetour">
-            <HintPath>..\Dependencies\MonoMod.RuntimeDetour.dll</HintPath>
-        </Reference>
-        <Reference Include="MonoMod.Utils">
-            <HintPath>..\Dependencies\MonoMod.Utils.dll</HintPath>
-        </Reference>
-        <Reference Include="Newtonsoft.Json">
-            <HintPath>..\Dependencies\Newtonsoft.Json.dll</HintPath>
-        </Reference>
-        <Reference Include="NLog">
-          <HintPath>..\Dependencies\NLog.dll</HintPath>
-        </Reference>
-        <Reference Include="Root.Township">
-            <HintPath>..\Generated\Root.Township-publicized.dll</HintPath>
-        </Reference>
-        <Reference Include="System"/>
-        <Reference Include="System.Core"/>
-        <Reference Include="System.Data"/>
-        <Reference Include="System.IdentityModel.Tokens.Jwt">
-          <HintPath>..\..\..\..\Games\Alta\A Township Tale\A Township Tale_Data\Managed\System.IdentityModel.Tokens.Jwt.dll</HintPath>
-        </Reference>
-        <Reference Include="System.Net" />
-        <Reference Include="System.Net.Http" />
-        <Reference Include="System.Net.Http.WebRequest" />
-        <Reference Include="System.Xml"/>
-        <Reference Include="Unity.InputSystem">
-            <HintPath>..\Dependencies\Unity.InputSystem.dll</HintPath>
-        </Reference>
-        <Reference Include="UnityEngine">
-            <HintPath>..\Dependencies\UnityEngine.dll</HintPath>
-        </Reference>
-        <Reference Include="UnityEngine.CoreModule">
-            <HintPath>..\Dependencies\UnityEngine.CoreModule.dll</HintPath>
-        </Reference>
-        <Reference Include="UnityEngine.IMGUIModule">
-          <HintPath>..\Dependencies\UnityEngine.IMGUIModule.dll</HintPath>
-        </Reference>
-        <Reference Include="YamlDotNet, Version=18.0.0.0, Culture=neutral, PublicKeyToken=ec19458f3c15af5e, processorArchitecture=MSIL">
-          <HintPath>..\packages\YamlDotNet.18.1.0\lib\net47\YamlDotNet.dll</HintPath>
-        </Reference>
-    </ItemGroup>
-    <ItemGroup>
-        <Compile Include="Services\Api\ApiManager.cs" />
-        <Compile Include="Services\Api\IApiManager.cs" />
-        <Compile Include="Services\Auth\AuthManager.cs" />
-        <Compile Include="Services\Auth\AuthPayloads.cs" />
-        <Compile Include="Services\Auth\IAuthManager.cs" />
-        <Compile Include="Services\IService.cs" />
-        <Compile Include="Patches\SecurityPatch.cs" />
-        <Compile Include="TavernArgs.cs" />
-        <Compile Include="Debugging\DebugHelper.cs" />
-        <Compile Include="Debugging\NLogCatcher.cs" />
-        <Compile Include="Patches\CosmeticsPatches.cs" />
-        <Compile Include="Patches\TeenyPatches.cs" />
-        <Compile Include="Services\Server\IApiServer.cs" />
-        <Compile Include="Services\Server\ServerListing.cs" />
-        <Compile Include="Services\Server\MinimalServerConfig.cs" />
-        <Compile Include="Services\Server\ServerConfig.cs" />
-        <Compile Include="Services\ServiceUtils.cs" />
-        <Compile Include="Services\TavernServices.cs" />
-        <Compile Include="Tavern.cs" />
-        <Compile Include="Properties\AssemblyInfo.cs"/>
-        <Compile Include="TavernDirectories.cs" />
-    </ItemGroup>
-    <ItemGroup>
-      <None Include="App.config" />
-      <None Include="packages.config" />
-    </ItemGroup>
-    <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{3E625713-62F3-4398-92A9-2EE88E6D9E1B}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>TavernLib</RootNamespace>
+    <AssemblyName>TavernLib</AssemblyName>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <LangVersion>9</LangVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="0Harmony">
+      <HintPath>..\Dependencies\0Harmony.dll</HintPath>
+    </Reference>
+    <Reference Include="Alta.Analytics.Runtime">
+      <HintPath>..\Dependencies\Alta.Analytics.Runtime.dll</HintPath>
+    </Reference>
+    <Reference Include="Alta.Api.Client">
+      <HintPath>..\Dependencies\Alta.Api.Client.dll</HintPath>
+    </Reference>
+    <Reference Include="Alta.Api.DataTransferModels">
+      <HintPath>..\Dependencies\Alta.Api.DataTransferModels.dll</HintPath>
+    </Reference>
+    <Reference Include="Alta.Authentication">
+      <HintPath>..\Dependencies\Alta.Authentication.dll</HintPath>
+    </Reference>
+    <Reference Include="Alta.CommandLine">
+      <HintPath>..\Dependencies\Alta.CommandLine.dll</HintPath>
+    </Reference>
+    <Reference Include="Alta.Core.Runtime">
+      <HintPath>..\Dependencies\Alta.Core.Runtime.dll</HintPath>
+    </Reference>
+    <Reference Include="Alta.Global.Runtime">
+      <HintPath>..\Dependencies\Alta.Global.Runtime.dll</HintPath>
+    </Reference>
+    <Reference Include="Alta.IO">
+      <HintPath>..\Dependencies\Alta.IO.dll</HintPath>
+    </Reference>
+    <Reference Include="Alta.NetworkTransport.Runtime">
+      <HintPath>..\Dependencies\Alta.NetworkTransport.Runtime.dll</HintPath>
+    </Reference>
+    <Reference Include="Alta.Platform">
+      <HintPath>..\Dependencies\Alta.Platform.dll</HintPath>
+    </Reference>
+    <Reference Include="Alta.Platform.Generic">
+      <HintPath>..\Dependencies\Alta.Platform.Generic.dll</HintPath>
+    </Reference>
+    <Reference Include="Alta.Serialization.Runtime">
+      <HintPath>..\Dependencies\Alta.Serialization.Runtime.dll</HintPath>
+    </Reference>
+    <Reference Include="Alta.Singletons">
+      <HintPath>..\Dependencies\Alta.Singletons.dll</HintPath>
+    </Reference>
+    <Reference Include="kcp2k">
+      <HintPath>..\Dependencies\kcp2k.dll</HintPath>
+    </Reference>
+    <Reference Include="MelonLoader">
+      <HintPath>..\Dependencies\MelonLoader.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.IdentityModel.Tokens">
+      <HintPath>..\Dependencies\Microsoft.IdentityModel.Tokens.dll</HintPath>
+    </Reference>
+    <Reference Include="MonoMod.ILHelpers">
+      <HintPath>..\Dependencies\MonoMod.ILHelpers.dll</HintPath>
+    </Reference>
+    <Reference Include="MonoMod.RuntimeDetour">
+      <HintPath>..\Dependencies\MonoMod.RuntimeDetour.dll</HintPath>
+    </Reference>
+    <Reference Include="MonoMod.Utils">
+      <HintPath>..\Dependencies\MonoMod.Utils.dll</HintPath>
+    </Reference>
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>..\Dependencies\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="NLog">
+      <HintPath>..\Dependencies\NLog.dll</HintPath>
+    </Reference>
+    <Reference Include="Root.Township">
+      <HintPath>..\Generated\Root.Township-publicized.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.IdentityModel.Tokens.Jwt, Version=8.19.1.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\A Township Tale\A Township Tale_Data\Managed\System.IdentityModel.Tokens.Jwt.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Net" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Net.Http.WebRequest" />
+    <Reference Include="System.Xml" />
+    <Reference Include="Unity.InputSystem">
+      <HintPath>..\Dependencies\Unity.InputSystem.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine">
+      <HintPath>..\Dependencies\UnityEngine.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>..\Dependencies\UnityEngine.CoreModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.IMGUIModule">
+      <HintPath>..\Dependencies\UnityEngine.IMGUIModule.dll</HintPath>
+    </Reference>
+    <Reference Include="YamlDotNet, Version=18.0.0.0, Culture=neutral, PublicKeyToken=ec19458f3c15af5e, processorArchitecture=MSIL">
+      <HintPath>..\packages\YamlDotNet.18.1.0\lib\net47\YamlDotNet.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Services\Api\ApiManager.cs" />
+    <Compile Include="Services\Api\IApiManager.cs" />
+    <Compile Include="Services\Auth\AuthManager.cs" />
+    <Compile Include="Services\Auth\AuthPayloads.cs" />
+    <Compile Include="Services\Auth\IAuthManager.cs" />
+    <Compile Include="Services\IService.cs" />
+    <Compile Include="Patches\SecurityPatch.cs" />
+    <Compile Include="TavernArgs.cs" />
+    <Compile Include="Debugging\DebugHelper.cs" />
+    <Compile Include="Debugging\NLogCatcher.cs" />
+    <Compile Include="Patches\CosmeticsPatches.cs" />
+    <Compile Include="Patches\TeenyPatches.cs" />
+    <Compile Include="Services\Server\IApiServer.cs" />
+    <Compile Include="Services\Server\ServerListing.cs" />
+    <Compile Include="Services\Server\MinimalServerConfig.cs" />
+    <Compile Include="Services\Server\ServerConfig.cs" />
+    <Compile Include="Services\ServiceUtils.cs" />
+    <Compile Include="Services\TavernServices.cs" />
+    <Compile Include="Tavern.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="TavernDirectories.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
+    <None Include="packages.config" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
