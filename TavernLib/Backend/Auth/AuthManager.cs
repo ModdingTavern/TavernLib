@@ -102,10 +102,10 @@ namespace TavernLib.Backend.Auth
             try
             {
                 var response = new AuthPayloads.PingResponse(
-                    _manager.ActiveListing._config.Name,
-                    false,
-                    false,
-                    _manager.ActiveListing._config.Game);
+                    _manager.ListingController.ServerConfig.LastRead.Name,
+                    !string.IsNullOrWhiteSpace(_manager.ListingController.ServerConfig.LastRead.PasswordHash),
+                    _manager.ListingController.UserConfig.LastRead.Whitelist != null,
+                    1757 ); // TODO
 
                 var serializedResponse = JsonConvert.SerializeObject(response);
                 var encodedResponse = Encoding.UTF8.GetBytes(serializedResponse);

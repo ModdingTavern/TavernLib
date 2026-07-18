@@ -11,7 +11,7 @@
         <AssemblyName>TavernLib</AssemblyName>
         <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
         <FileAlignment>512</FileAlignment>
-        <LangVersion>9</LangVersion>
+        <LangVersion>12</LangVersion>
     </PropertyGroup>
     <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
         <PlatformTarget>AnyCPU</PlatformTarget>
@@ -134,10 +134,11 @@
         <Compile Include="Backend\Api\TavernApiManager.cs" />
         <Compile Include="Backend\Auth\AuthManager.cs" />
         <Compile Include="Backend\Auth\AuthPayloads.cs" />
-        <Compile Include="Backend\Server\IApiServer.cs" />
-        <Compile Include="Backend\Server\MinimalServerConfig.cs" />
-        <Compile Include="Backend\Server\ServerConfig.cs" />
-        <Compile Include="Backend\Server\ServerListing.cs" />
+        <Compile Include="Backend\Server\Configs\ServerConfigFile.cs" />
+        <Compile Include="Backend\Server\Configs\ServerSettingsConfig.cs" />
+        <Compile Include="Backend\Server\Configs\UserConfigFile.cs" />
+        <Compile Include="Backend\Server\ServerListingController.cs" />
+        <Compile Include="Backend\Server\ServerListingPayload.cs" />
         <Compile Include="Backend\BackendUtils.cs" />
         <Compile Include="Services\IService.cs" />
         <Compile Include="Patches\SecurityPatch.cs" />

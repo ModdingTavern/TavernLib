@@ -8,7 +8,11 @@ namespace TavernLib
     {
         public static string AppData => Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
         public static string ATTSave => Path.Combine(AppData, "A Township Tale");
-        public static string ServerConfig => Path.Combine(MelonEnvironment.GameRootDirectory, "server-config.yaml");
+        
         public static string ModdingTavern => Path.Combine(AppData, "TheModdingTavern");
+        public static string Blacklist => Path.Combine(ModdingTavern, "blacklist.json");
+        public static string ServerSettings => Path.Combine(ModdingTavern, "server_settings.json");
+        public static string Users => Path.Combine(ModdingTavern, "users.json");
+        public static string Whitelist => Path.Combine(ModdingTavern, "whitelist.json");
     }
 }

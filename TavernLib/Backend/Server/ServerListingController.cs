@@ -1,28 +1,32 @@
 ﻿using System;
+using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Alta.Api.DataTransferModels.Extensions;
+using TavernLib.Backend.Server.Configs;
 using UnityEngine;
 
 namespace TavernLib.Backend.Server
 {
-    public class ServerListing : IApiServer
+    public class ServerListingController
     {
         private HttpClient _apiClient;
-        public readonly ServerConfig _config;
-        
-        
-        public ServerListing(ServerConfig config)
+        public UserConfigFile UserConfig { get; private set; }
+        public ServerSettingsConfig ServerConfig { get; private set; }
+
+
+        public ServerListingController()
         {
             _apiClient = new HttpClient
             {
                 BaseAddress = new Uri(BackendUtils.TavernApi),
                 Timeout = TimeSpan.FromSeconds(6)
             };
-
-            _config = config;
+            
+            UserConfig = new UserConfigFile(Path.Combine(TavernDirectories.ModdingTavern, "users.json"));
+            ServerConfig = new ServerSettingsConfig(Path.Combine(TavernDirectories.ModdingTavern, "server_settings.json"));
+            
             _ = HeartbeatAsync();
-
             Application.quitting += CloseListing;
         }
         
@@ -58,8 +62,8 @@ namespace TavernLib.Backend.Server
         {
             try
             {
-                var minimalConfig = MinimalServerConfig.FromServerConfig(_config);
-                await _apiClient.PostAsync(BackendUtils.ServerUri, new HttpClientExtensions.JsonContent(minimalConfig));
+                var payload = ServerListingPayload.FromConfig(ServerConfig);
+                await _apiClient.PostAsync(BackendUtils.ServerUri, new HttpClientExtensions.JsonContent(payload));
             }
             catch (Exception e)
             {
@@ -75,7 +79,7 @@ namespace TavernLib.Backend.Server
         {
             var payload = new
             {
-                listing_token = _config.ListingToken
+                listing_token = ServerConfig.LastRead.CommunityListingToken
             };
             
             _apiClient.DeleteAsync(BackendUtils.ServerUri, new HttpClientExtensions.JsonContent(payload));
