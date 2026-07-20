@@ -10,7 +10,7 @@ namespace TavernLib.Backend.Server
 {
     public class ServerListingController
     {
-        private HttpClient _apiClient;
+        private readonly HttpClient _apiClient;
         public UserConfigFile UserConfig { get; private set; }
         public ServerSettingsConfig ServerConfig { get; private set; }
 
