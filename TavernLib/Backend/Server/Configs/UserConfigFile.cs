@@ -5,9 +5,9 @@ namespace TavernLib.Backend.Server.Configs;
 
 public class UserConfig
 {
-    [JsonProperty("users")] public Dictionary<string, User> Users { get; set; }
-    [JsonProperty("whitelist")] public ListConfig Whitelist { get; set; }
-    [JsonProperty("blacklist")] public BlacklistConfig Blacklist { get; set; }
+    [JsonProperty("users")] public Dictionary<string, User> Users { get; set; } = new();
+    [JsonProperty("whitelist")] public ListConfig Whitelist { get; set; } = new();
+    [JsonProperty("blacklist")] public BlacklistConfig Blacklist { get; set; } = new();
 
     public class User
     {
@@ -18,18 +18,21 @@ public class UserConfig
 
     public class ListConfig
     {
-        [JsonProperty("usernames")] public List<string> Usernames { get; set; }
-        [JsonProperty("ips")] public List<string> Ips { get; set; }
+        [JsonProperty("usernames")] public List<string> Usernames { get; set; } = [];
+        [JsonProperty("ips")] public List<string> Ips { get; set; } = [];
     }
 
     public class BlacklistConfig : ListConfig
     {
-        [JsonProperty("user_ids")]
-        public List<long> UserIds { get; set; }
+        [JsonProperty("user_ids")] public List<long> UserIds { get; set; } = [];
     }
 }
 
 public class UserConfigFile(string filePath) : ServerConfigFile<UserConfig>(filePath)
 {
-    
+    public override void ReadFromFile()
+    {
+        base.ReadFromFile();
+        
+    }
 }
