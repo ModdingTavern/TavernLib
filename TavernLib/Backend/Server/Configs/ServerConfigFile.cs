@@ -7,7 +7,7 @@ namespace TavernLib.Backend.Server.Configs
     public abstract class ServerConfigFile<T>(string filePath) where T : class, new()
     {
         private string FilePath { get; set; } = filePath;
-        public T LastRead { get; set; } = new();
+        public T LastRead { get; private set; } = new();
 
         
         public virtual void ReadFromFile()
