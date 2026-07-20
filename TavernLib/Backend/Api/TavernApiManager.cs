@@ -26,7 +26,7 @@ namespace TavernLib.Backend.Api
             UserConfig.ReadFromFile();
             ServerConfig.ReadFromFile();
             
-            ListingController = new ServerListingController();
+            ListingController = new ServerListingController(this);
             AuthManager = new AuthManager(this);
         }
     }
