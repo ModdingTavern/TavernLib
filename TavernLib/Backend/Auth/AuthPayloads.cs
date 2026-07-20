@@ -24,9 +24,9 @@ namespace TavernLib.Backend.Auth
 
         public struct AuthenticateRequest
         {
-            [JsonProperty(PropertyName = "username")] private string Username { get; set; }
-            [JsonProperty(PropertyName = "token")] private string Token { get; set; }
-            [JsonProperty(PropertyName = "password")] private string Password { get; set; }
+            [JsonProperty(PropertyName = "username")] public string Username { get; private set; }
+            [JsonProperty(PropertyName = "token")] public string Token { get; private set; }
+            [JsonProperty(PropertyName = "password")] public string Password { get; private set; }
         }
 
 
