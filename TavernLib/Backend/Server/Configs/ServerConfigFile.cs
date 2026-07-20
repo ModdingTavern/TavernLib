@@ -19,7 +19,7 @@ namespace TavernLib.Backend.Server.Configs
                     LastRead = new T();
                     
                     using var stream = File.CreateText(FilePath);
-                    stream.WriteAsync(JsonConvert.SerializeObject(LastRead));
+                    stream.WriteAsync(JsonConvert.SerializeObject(LastRead, Formatting.Indented));
                     
                     return;
                 }
