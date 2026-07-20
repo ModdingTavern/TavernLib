@@ -14,7 +14,15 @@ namespace TavernLib.Backend.Server.Configs
         {
             try
             {
-                if (!File.Exists(FilePath)) Tavern.Logger.Error($"No file responsible for type {nameof(T)} exists!");
+                if (!File.Exists(FilePath))
+                {
+                    LastRead = new T();
+                    
+                    using var stream = File.CreateText(FilePath);
+                    stream.WriteAsync(JsonConvert.SerializeObject(LastRead));
+                    
+                    return;
+                }
 
                 var config = File.ReadAllText(FilePath);
                 var result = JsonConvert.DeserializeObject<T>(config);
@@ -22,7 +30,7 @@ namespace TavernLib.Backend.Server.Configs
             }
             catch (Exception e)
             {
-                Tavern.Logger.Error($"Error when reading file responsible for type {nameof(T)}! {e}");
+                Tavern.Logger.Error($"Error when managing file responsible for type {nameof(T)}! {e}");
                 throw;
             }
         }
