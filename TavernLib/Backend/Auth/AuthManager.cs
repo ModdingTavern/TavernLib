@@ -15,7 +15,7 @@ namespace TavernLib.Backend.Auth
     {
         private TavernApiManager _manager;
         private TcpListener _listener;
-
+        
 
         public AuthManager(TavernApiManager manager)
         {
@@ -102,9 +102,9 @@ namespace TavernLib.Backend.Auth
             try
             {
                 var response = new AuthPayloads.PingResponse(
-                    _manager.ListingController.ServerConfig.LastRead.Name,
-                    !string.IsNullOrWhiteSpace(_manager.ListingController.ServerConfig.LastRead.PasswordHash),
-                    _manager.ListingController.UserConfig.LastRead.Whitelist != null,
+                    _manager.ServerConfig.LastRead.Name,
+                    !string.IsNullOrWhiteSpace(_manager.ServerConfig.LastRead.PasswordHash),
+                    _manager.UserConfig.LastRead.Whitelist != null,
                     1757 ); // TODO
 
                 var serializedResponse = JsonConvert.SerializeObject(response);
@@ -125,8 +125,6 @@ namespace TavernLib.Backend.Auth
             try
             {
                 var typedPayload = JsonConvert.DeserializeObject<AuthPayloads.AuthenticateRequest>(payload.ToString());
-                
-                
             }
             catch (Exception e)
             {
