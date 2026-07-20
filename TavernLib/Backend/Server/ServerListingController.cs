@@ -27,7 +27,7 @@ namespace TavernLib.Backend.Server
             ServerConfig = new ServerSettingsConfig(Path.Combine(TavernDirectories.ModdingTavern, "server_settings.json"));
             
             UserConfig.ReadFromFile();
-            UserConfig.ReadFromFile();
+            ServerConfig.ReadFromFile();
             
             _ = HeartbeatAsync();
             Application.quitting += CloseListing;
