@@ -80,7 +80,7 @@ namespace TavernLib.Backend.Auth
                 var jsonPayload = JObject.Parse(payload);
 
                 if (jsonPayload.ContainsKey("ping")) await WritePongResponse(stream);
-                else if (jsonPayload.ContainsKey("username")) await WriteAuthOk(stream);
+                else if (jsonPayload.ContainsKey("username")) await ManageAuthRequest(stream, jsonPayload);
                 else
                 {
                     Tavern.Logger.Warning($"Unknown payload sent to AuthManager {jsonPayload}");
@@ -118,6 +118,23 @@ namespace TavernLib.Backend.Auth
             }
         }
 
+        
+        
+        private async Task ManageAuthRequest(Stream stream, JObject payload)
+        {
+            try
+            {
+                var typedPayload = JsonConvert.DeserializeObject<AuthPayloads.AuthenticateRequest>(payload.ToString());
+                
+                
+            }
+            catch (Exception e)
+            {
+                Tavern.Logger.Error($"Error when managing join request {e}");
+                throw;
+            }
+        }
+        
         private async Task WriteAuthOk(Stream stream)
         {
             try
