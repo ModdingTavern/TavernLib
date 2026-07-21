@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using MelonLoader.Logging;
-using TavernLib.Debugging;
 
 namespace TavernLib.Services
 {

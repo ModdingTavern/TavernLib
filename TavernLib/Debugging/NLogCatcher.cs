@@ -1,11 +1,9 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using MelonLoader;
 using MelonLoader.Logging;
 using NLog;
 using NLog.Config;
 using NLog.Targets;
-using UnityEngine;
 
 namespace TavernLib.Debugging
 {

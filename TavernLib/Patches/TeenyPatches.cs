@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.IO;
@@ -13,14 +12,12 @@ using Alta.Api.DataTransferModels.Converters;
 using Alta.Api.DataTransferModels.Models.Responses;
 using Alta.Api.DataTransferModels.Utility;
 using Alta.Customization;
-using Alta.Global;
 using Alta.Networking;
 using Alta.Networking.Scripts.Player;
 using Alta.Networking.Servers;
 using Alta.QuickAccessActions;
 using HarmonyLib;
 using MelonLoader.Logging;
-using UnityEngine;
 
 namespace TavernLib.Patches
 {

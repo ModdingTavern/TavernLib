@@ -1,11 +1,8 @@
 using System;
-using System.IO;
 using MelonLoader;
-using MelonLoader.Logging;
 using TavernLib.Backend.Api;
 using TavernLib.Debugging;
 using TavernLib.Services;
-using YamlDotNet.Serialization;
 
 
 [assembly: MelonInfo(typeof(TavernLib.Tavern), "TavernLib", "0.0.1", "Tavern Team", "https://github.com/ModdingTavern/TavernLib")]

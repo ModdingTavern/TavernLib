@@ -1,11 +1,8 @@
-﻿using System;
-using System.IO;
-using MelonLoader.Logging;
+﻿using System.IO;
 using TavernLib.Backend.Auth;
 using TavernLib.Backend.Server;
 using TavernLib.Backend.Server.Configs;
 using TavernLib.Services;
-using YamlDotNet.Serialization;
 
 namespace TavernLib.Backend.Api
 {

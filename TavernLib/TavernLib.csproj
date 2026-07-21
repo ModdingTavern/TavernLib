@@ -126,9 +126,6 @@
         <Reference Include="UnityEngine.IMGUIModule">
           <HintPath>..\Dependencies\UnityEngine.IMGUIModule.dll</HintPath>
         </Reference>
-        <Reference Include="YamlDotNet, Version=18.0.0.0, Culture=neutral, PublicKeyToken=ec19458f3c15af5e, processorArchitecture=MSIL">
-          <HintPath>..\packages\YamlDotNet.18.1.0\lib\net47\YamlDotNet.dll</HintPath>
-        </Reference>
     </ItemGroup>
     <ItemGroup>
         <Compile Include="Backend\Api\TavernApiManager.cs" />
