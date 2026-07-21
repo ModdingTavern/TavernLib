@@ -1,5 +1,6 @@
 using System;
 using MelonLoader;
+using MelonLoader.Logging;
 using TavernLib.Backend.Api;
 using TavernLib.Debugging;
 using TavernLib.Services;
@@ -28,6 +29,7 @@ namespace TavernLib
                 
                 if (CommandLineArguments.Contains(CommandLineArguments.StartServerArgument))
                 {
+                    Logger.Msg(ColorARGB.Chartreuse, "Booting TavernLib in server mode");
                     TavernServices.AddService(new TavernApiManager());
                 }
 

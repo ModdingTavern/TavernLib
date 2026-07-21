@@ -200,7 +200,7 @@ namespace TavernLib.Patches
         [HarmonyPatch(typeof(Player), nameof(Player.SyncCosmetics)), HarmonyPrefix]
         public static bool LocalDeleteCosmeticPreset(IPlayer player, Alta.Serialization.Stream stream, Player __instance)
         {
-            Tavern.Logger.Msg(ColorARGB.Azure, "SyncCosmetics patch!");
+            Tavern.Logger.Msg(ColorARGB.Chartreuse, "SyncCosmetics patch!");
             try
             {
                 if (stream.IsReadingOnServerNonLocalTest() && !ReferenceEquals(__instance, player))
@@ -237,7 +237,7 @@ namespace TavernLib.Patches
             {
                 Player.logger.Error(exception, "[Player] Error syncing customization");
             }
-            Tavern.Logger.Msg(ColorARGB.Azure, "SyncCosmetics patch done!");
+            Tavern.Logger.Msg(ColorARGB.Chartreuse, "SyncCosmetics patch done!");
             return false;
         }
 

@@ -2,6 +2,7 @@
 using System.Net.Http;
 using System.Threading.Tasks;
 using Alta.Api.DataTransferModels.Extensions;
+using MelonLoader.Logging;
 using TavernLib.Backend.Api;
 using UnityEngine;
 
@@ -30,6 +31,8 @@ namespace TavernLib.Backend.Server
         
         private async Task HeartbeatAsync()
         {
+            Tavern.Logger.Msg(ColorARGB.Chartreuse, "Started server listing lifecycle");
+            
             try
             {
                 await OpenListing();
@@ -57,6 +60,8 @@ namespace TavernLib.Backend.Server
         
         public async Task Ping()
         {
+            Tavern.Logger.Msg(ColorARGB.Chartreuse, "Server listing heartbeat");
+            
             try
             {
                 var payload = ServerListingPayload.FromConfig(_manager.ServerConfig);
@@ -74,6 +79,7 @@ namespace TavernLib.Backend.Server
         
         public void CloseListing()
         {
+            Tavern.Logger.Msg(ColorARGB.Chartreuse, "Server listing closing");
             var payload = new
             {
                 listing_token = _manager.ServerConfig.LastRead.CommunityListingToken
