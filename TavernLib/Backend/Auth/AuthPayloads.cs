@@ -30,10 +30,10 @@ namespace TavernLib.Backend.Auth
         }
 
 
-        public readonly struct AuthenticateOk
+        public readonly struct AuthenticateOk(ulong userId)
         {
             [JsonProperty(PropertyName = "status")] private string Status => "ok";
-            [JsonProperty(PropertyName = "user_id")] private ulong UserId => 2000000000 + (ulong)ServerHandler.Current.SaveUtility.PlayerSaveUtility.PlayerFolder.AllFiles.Count();
+            [JsonProperty(PropertyName = "user_id")] private ulong UserId => userId;
         }
 
 
