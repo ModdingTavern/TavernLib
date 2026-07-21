@@ -2,6 +2,7 @@
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
+using System.Runtime.Remoting.Messaging;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -15,7 +16,7 @@ namespace TavernLib.Backend.Auth
     {
         private TavernApiManager _manager;
         private TcpListener _listener;
-        
+
 
         public AuthManager(TavernApiManager manager)
         {
@@ -60,7 +61,9 @@ namespace TavernLib.Backend.Auth
                         JObject.Parse(currentText);
                         return currentText;
                     }
-                    catch (JsonReaderException) { }
+                    catch (JsonReaderException)
+                    {
+                    }
                 }
             }
 
@@ -80,7 +83,7 @@ namespace TavernLib.Backend.Auth
                 var jsonPayload = JObject.Parse(payload);
 
                 if (jsonPayload.ContainsKey("ping")) await WritePongResponse(stream);
-                else if (jsonPayload.ContainsKey("username")) await ManageAuthRequest(stream, jsonPayload);
+                else if (jsonPayload.ContainsKey("username")) await ManageAuthRequest(stream, jsonPayload, client);
                 else
                 {
                     Tavern.Logger.Warning($"Unknown payload sent to AuthManager {jsonPayload}");
@@ -104,8 +107,8 @@ namespace TavernLib.Backend.Auth
                 var response = new AuthPayloads.PingResponse(
                     _manager.ServerConfig.LastRead.Name,
                     !string.IsNullOrWhiteSpace(_manager.ServerConfig.LastRead.PasswordHash),
-                    _manager.UserConfig.LastRead.Whitelist != null,
-                    1757 ); // TODO
+                    _manager.UserConfig.LastRead.Whitelist.Usernames.Count > 0 || _manager.UserConfig.LastRead.Whitelist.Ips.Count > 0,
+                    1757); // TODO
 
                 var serializedResponse = JsonConvert.SerializeObject(response);
                 var encodedResponse = Encoding.UTF8.GetBytes(serializedResponse);
@@ -118,13 +121,41 @@ namespace TavernLib.Backend.Auth
             }
         }
 
-        
-        
-        private async Task ManageAuthRequest(Stream stream, JObject payload)
+
+        private async Task ManageAuthRequest(Stream stream, JObject payload, TcpClient joiner)
         {
             try
             {
                 var typedPayload = JsonConvert.DeserializeObject<AuthPayloads.AuthenticateRequest>(payload.ToString());
+                var joinerIp = ((IPEndPoint)joiner.Client.RemoteEndPoint).Address.ToString();
+                
+                // Whitelist
+                if (_manager.UserConfig.LastRead.Whitelist.Ips.Count > 0 || _manager.UserConfig.LastRead.Whitelist.Usernames.Count > 0)
+                {
+                    var ipAllowed = _manager.UserConfig.LastRead.Whitelist.Ips.Contains(joinerIp);
+                    var nameAllowed = _manager.UserConfig.LastRead.Whitelist.Usernames.Contains(typedPayload.Username);
+
+                    if (!ipAllowed && !nameAllowed) return; // Not on the whitelist, return to graceful socket closing
+                }
+                
+                // Blacklist
+                if (_manager.UserConfig.LastRead.Blacklist.Ips.Count > 0 || _manager.UserConfig.LastRead.Blacklist.Usernames.Count > 0)
+                {
+                    var ipBlocked = _manager.UserConfig.LastRead.Blacklist.Ips.Contains(joinerIp);
+                    var nameBlocked = _manager.UserConfig.LastRead.Blacklist.Usernames.Contains(typedPayload.Username);
+
+                    if (ipBlocked || nameBlocked) return; // On the blacklist, return to graceful socket closing
+                }
+
+                // Check if user had the wrong password
+                if (!string.IsNullOrWhiteSpace(_manager.ServerConfig.LastRead.PasswordHash))
+                {
+                    if (typedPayload.Password != _manager.ServerConfig.LastRead.PasswordHash) return;
+                }
+
+
+                
+                await WriteAuthOk(stream);
             }
             catch (Exception e)
             {
@@ -132,7 +163,7 @@ namespace TavernLib.Backend.Auth
                 throw;
             }
         }
-        
+
         private async Task WriteAuthOk(Stream stream)
         {
             try
