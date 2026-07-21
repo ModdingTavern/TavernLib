@@ -9,7 +9,7 @@ namespace TavernLib.Backend.Server
         [JsonProperty(PropertyName = "listing_token")] public string ListingToken { get; private set; }
         [JsonProperty(PropertyName = "name")] public string Name { get; private set; }
         [JsonProperty(PropertyName = "port")] public ushort Port { get; private set; }
-        [JsonProperty(PropertyName = "player_limit")] public uint PlayerLimit { get; private set; }
+        [JsonProperty(PropertyName = "player_limit")] public int PlayerLimit { get; private set; }
         [JsonProperty(PropertyName = "has_password")] public bool HasPassword { get; private set; }
         [JsonProperty(PropertyName = "player_count")] public int PlayerCount { get; private set; }
         [JsonProperty(PropertyName = "community_listed")] public bool CommunityListed { get; private set; }
@@ -21,9 +21,9 @@ namespace TavernLib.Backend.Server
                 ListingToken = config.LastRead.CommunityListingToken,
                 Name = config.LastRead.Name,
                 Port = 1757, // TODO
-                PlayerLimit = config.LastRead.MaxPlayers,
+                PlayerLimit = ServerHandler.Current?.PlayerLimit ?? config.LastRead.MaxPlayers,
                 HasPassword = !string.IsNullOrWhiteSpace(config.LastRead.PasswordHash),
-                PlayerCount = 5,
+                PlayerCount = ServerHandler.Current?.Connections ?? 0,
                 CommunityListed = config.LastRead.CommunityListed
             };
         }
