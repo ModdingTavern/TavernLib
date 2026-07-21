@@ -128,24 +128,9 @@ namespace TavernLib.Backend.Auth
                 var typedPayload = JsonConvert.DeserializeObject<AuthPayloads.AuthenticateRequest>(payload.ToString());
                 var joinerIp = ((IPEndPoint)joiner.Client.RemoteEndPoint).Address.ToString();
 
-                // Check if user is on the blacklist or whitelist
-                if (!await CheckIfPermitted(joinerIp, typedPayload.Username, stream)) return;
-
-                // Check if user is missing password/has the wrong password
-                if (!string.IsNullOrWhiteSpace(_manager.ServerConfig.LastRead.PasswordHash))
-                {
-                    if (string.IsNullOrWhiteSpace(typedPayload.Password))
-                    {
-                        await WriteResponse(stream, new AuthPayloads.NeedsPassword());
-                        return;
-                    }
-                    
-                    if (typedPayload.Password != _manager.ServerConfig.LastRead.PasswordHash)
-                    {
-                        await WriteResponse(stream, new AuthPayloads.WrongPassword());
-                        return;
-                    }
-                }
+                // Check if user is on the blacklist or whitelist, and if they have the right password
+                if (!await CheckIfPermitted(joinerIp, typedPayload, stream)) return;
+                // User has passed all authentication checks, set them up for joining
                 
                 await WriteResponse(stream, new AuthPayloads.AuthenticateOk());
             }
@@ -156,15 +141,14 @@ namespace TavernLib.Backend.Auth
             }
         }
 
-        private async Task<bool> CheckIfPermitted(string joinerIp, string username, Stream stream)
+        private async Task<bool> CheckIfPermitted(string joinerIp, AuthPayloads.AuthenticateRequest payload, Stream stream)
         {
             // Whitelist
             if (_manager.UserConfig.LastRead.Whitelist.Ips.Count > 0 || _manager.UserConfig.LastRead.Whitelist.Usernames.Count > 0)
             {
                 var ipAllowed = _manager.UserConfig.LastRead.Whitelist.Ips.Contains(joinerIp);
-                var nameAllowed = _manager.UserConfig.LastRead.Whitelist.Usernames.Contains(username);
-
-                // Not on the whitelist
+                var nameAllowed = _manager.UserConfig.LastRead.Whitelist.Usernames.Contains(payload.Username);
+                
                 if (!ipAllowed && !nameAllowed)
                 {
                     await WriteResponse(stream, new AuthPayloads.NotWhitelisted());
@@ -176,12 +160,28 @@ namespace TavernLib.Backend.Auth
             if (_manager.UserConfig.LastRead.Blacklist.Ips.Count > 0 || _manager.UserConfig.LastRead.Blacklist.Usernames.Count > 0)
             {
                 var ipBlocked = _manager.UserConfig.LastRead.Blacklist.Ips.Contains(joinerIp);
-                var nameBlocked = _manager.UserConfig.LastRead.Blacklist.Usernames.Contains(username);
-
-                // On the blacklist
+                var nameBlocked = _manager.UserConfig.LastRead.Blacklist.Usernames.Contains(payload.Username);
+                
                 if (ipBlocked || nameBlocked)
                 {
                     await WriteResponse(stream, new AuthPayloads.GenericFail("Blacklisted"));
+                    return false;
+                }
+            }
+            
+            //Password
+            if (!string.IsNullOrWhiteSpace(_manager.ServerConfig.LastRead.PasswordHash))
+            {
+                if (string.IsNullOrWhiteSpace(payload.Password))
+                {
+                    await WriteResponse(stream, new AuthPayloads.NeedsPassword());
+                    return false;
+                }
+                    
+                // Hash the user provided password again to match Tavern Launcher's password setup
+                if (BackendUtils.HashDigest(payload.Password) != _manager.ServerConfig.LastRead.PasswordHash)
+                {
+                    await WriteResponse(stream, new AuthPayloads.WrongPassword());
                     return false;
                 }
             }
