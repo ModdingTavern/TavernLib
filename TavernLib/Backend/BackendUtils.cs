@@ -10,7 +10,7 @@ namespace TavernLib.Backend
         public static string ServerUri => "/servers";
 
 
-        public static string HashClient(string input)
+        public static string HashDigest(string input)
         {
             using var hash = SHA256.Create();
             var byteArray = hash.ComputeHash(Encoding.UTF8.GetBytes(input));
