@@ -128,32 +128,14 @@ namespace TavernLib.Backend.Auth
             {
                 var typedPayload = JsonConvert.DeserializeObject<AuthPayloads.AuthenticateRequest>(payload.ToString());
                 var joinerIp = ((IPEndPoint)joiner.Client.RemoteEndPoint).Address.ToString();
-                
-                // Whitelist
-                if (_manager.UserConfig.LastRead.Whitelist.Ips.Count > 0 || _manager.UserConfig.LastRead.Whitelist.Usernames.Count > 0)
-                {
-                    var ipAllowed = _manager.UserConfig.LastRead.Whitelist.Ips.Contains(joinerIp);
-                    var nameAllowed = _manager.UserConfig.LastRead.Whitelist.Usernames.Contains(typedPayload.Username);
 
-                    if (!ipAllowed && !nameAllowed) return; // Not on the whitelist, return to graceful socket closing
-                }
-                
-                // Blacklist
-                if (_manager.UserConfig.LastRead.Blacklist.Ips.Count > 0 || _manager.UserConfig.LastRead.Blacklist.Usernames.Count > 0)
-                {
-                    var ipBlocked = _manager.UserConfig.LastRead.Blacklist.Ips.Contains(joinerIp);
-                    var nameBlocked = _manager.UserConfig.LastRead.Blacklist.Usernames.Contains(typedPayload.Username);
-
-                    if (ipBlocked || nameBlocked) return; // On the blacklist, return to graceful socket closing
-                }
+                if (!CheckIfPermitted(joinerIp, typedPayload.Username)) return;
 
                 // Check if user had the wrong password
                 if (!string.IsNullOrWhiteSpace(_manager.ServerConfig.LastRead.PasswordHash))
                 {
                     if (typedPayload.Password != _manager.ServerConfig.LastRead.PasswordHash) return;
                 }
-
-
                 
                 await WriteAuthOk(stream);
             }
@@ -164,6 +146,29 @@ namespace TavernLib.Backend.Auth
             }
         }
 
+        private bool CheckIfPermitted(string joinerIp, string username)
+        {
+            // Whitelist
+            if (_manager.UserConfig.LastRead.Whitelist.Ips.Count > 0 || _manager.UserConfig.LastRead.Whitelist.Usernames.Count > 0)
+            {
+                var ipAllowed = _manager.UserConfig.LastRead.Whitelist.Ips.Contains(joinerIp);
+                var nameAllowed = _manager.UserConfig.LastRead.Whitelist.Usernames.Contains(username);
+
+                if (!ipAllowed && !nameAllowed) return false; // Not on the whitelist, return to graceful socket closing
+            }
+                
+            // Blacklist
+            if (_manager.UserConfig.LastRead.Blacklist.Ips.Count > 0 || _manager.UserConfig.LastRead.Blacklist.Usernames.Count > 0)
+            {
+                var ipBlocked = _manager.UserConfig.LastRead.Blacklist.Ips.Contains(joinerIp);
+                var nameBlocked = _manager.UserConfig.LastRead.Blacklist.Usernames.Contains(username);
+
+                if (ipBlocked || nameBlocked) return false; // On the blacklist, return to graceful socket closing
+            }
+
+            return true;
+        }
+        
         private async Task WriteAuthOk(Stream stream)
         {
             try
