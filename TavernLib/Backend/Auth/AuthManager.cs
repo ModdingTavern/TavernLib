@@ -148,7 +148,7 @@ namespace TavernLib.Backend.Auth
 
         private async Task PostPermissionCheck(Stream stream, AuthPayloads.AuthenticateRequest payload, string ip)
         {
-            if (_manager.UserConfig.LastRead.Users.TryGetValue(payload.Username, out var userData))
+            if (_manager.UserConfig.LastRead.Users.TryGetValue(payload.Username.ToLower(), out var userData))
             {
                 if (string.IsNullOrWhiteSpace(userData.Token)) userData.Token = payload.Token;
                 else if (payload.Token != userData.Token)
@@ -162,14 +162,14 @@ namespace TavernLib.Backend.Auth
             else
             {
                 Tavern.Logger.Msg(ColorARGB.Chartreuse, $"Joining user at IP {ip} being allotted a slot in Users.json");
-                _manager.UserConfig.LastRead.Users[payload.Username] = new UserConfig.User
+                _manager.UserConfig.LastRead.Users[payload.Username.ToLower()] = new UserConfig.User
                 {
                     RegisteredFrom = ip,
                     Token = payload.Token,
                     UserId = 1000000000U + (ulong)_manager.UserConfig.LastRead.Users.Count
                 };
 
-                userData = _manager.UserConfig.LastRead.Users[payload.Username];
+                userData = _manager.UserConfig.LastRead.Users[payload.Username.ToLower()];
             }
             
             Tavern.Logger.Msg(ColorARGB.Chartreuse, "Writing any potential changes during join to file");

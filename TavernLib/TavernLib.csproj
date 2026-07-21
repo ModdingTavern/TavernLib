@@ -137,6 +137,7 @@
         <Compile Include="Backend\Server\ServerListingController.cs" />
         <Compile Include="Backend\Server\ServerListingPayload.cs" />
         <Compile Include="Backend\BackendUtils.cs" />
+        <Compile Include="Patches\PlayerLimitPatch.cs" />
         <Compile Include="Services\IService.cs" />
         <Compile Include="Patches\SecurityPatch.cs" />
         <Compile Include="TavernArgs.cs" />
