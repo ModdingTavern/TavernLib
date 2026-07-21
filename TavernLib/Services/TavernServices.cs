@@ -20,9 +20,9 @@ namespace TavernLib.Services
             ServiceEntries[typeof(T)] = instance;
         }
         
-        public static IService GetService<T>() where T : IService
+        public static T GetService<T>() where T : class, IService
         {
-            if (ServiceEntries.TryGetValue(typeof(T), out var result)) return result;
+            if (ServiceEntries.TryGetValue(typeof(T), out var result)) return result as T;
             
             Tavern.Logger.Error($"Service of type {nameof(T)} was not found!");
             return null;
