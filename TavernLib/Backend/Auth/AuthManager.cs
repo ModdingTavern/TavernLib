@@ -113,23 +113,13 @@ namespace TavernLib.Backend.Auth
 
         private async Task WritePongResponse(Stream stream)
         {
-            try
-            {
-                var response = new AuthPayloads.PingResponse(
-                    _manager.ServerConfig.LastRead.Name,
-                    !string.IsNullOrWhiteSpace(_manager.ServerConfig.LastRead.PasswordHash),
-                    _manager.UserConfig.LastRead.Whitelist.Usernames.Count > 0 || _manager.UserConfig.LastRead.Whitelist.Ips.Count > 0,
-                    1757); // TODO
+            var response = new AuthPayloads.PingResponse(
+                _manager.ServerConfig.LastRead.Name,
+                !string.IsNullOrWhiteSpace(_manager.ServerConfig.LastRead.PasswordHash),
+                _manager.UserConfig.LastRead.Whitelist.Usernames.Count > 0 || _manager.UserConfig.LastRead.Whitelist.Ips.Count > 0,
+                1757); // TODO
 
-                var serializedResponse = JsonConvert.SerializeObject(response);
-                var encodedResponse = Encoding.UTF8.GetBytes(serializedResponse);
-
-                await stream.WriteAsync(encodedResponse, 0, encodedResponse.Length);
-            }
-            catch (Exception e)
-            {
-                Tavern.Logger.Error($"Error when sending pong response {e}");
-            }
+            await WriteResponse(stream, response);
         }
 
 
