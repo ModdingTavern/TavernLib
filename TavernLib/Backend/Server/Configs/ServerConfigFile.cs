@@ -34,5 +34,28 @@ namespace TavernLib.Backend.Server.Configs
                 throw;
             }
         }
+        
+        public virtual void WriteToFile()
+        {
+            try
+            {
+                if (!File.Exists(FilePath))
+                {
+                    LastRead ??= new T();
+                    
+                    using var stream = File.CreateText(FilePath);
+                    stream.WriteAsync(JsonConvert.SerializeObject(LastRead, Formatting.Indented));
+                    
+                    return;
+                }
+
+                File.WriteAllText(FilePath, JsonConvert.SerializeObject(LastRead, Formatting.Indented));
+            }
+            catch (Exception e)
+            {
+                Tavern.Logger.Error($"Error when managing file responsible for type {nameof(T)}! {e}");
+                throw;
+            }
+        }
     }
 }
