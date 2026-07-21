@@ -130,6 +130,13 @@ namespace TavernLib.Backend.Auth
                 _manager.UserConfig.ReadFromFile(); // Read to make sure validation can be up-to date
                 
                 var typedPayload = JsonConvert.DeserializeObject<AuthPayloads.AuthenticateRequest>(payload.ToString());
+                if (string.IsNullOrWhiteSpace(typedPayload.Token) || string.IsNullOrWhiteSpace(typedPayload.Username))
+                {
+                    await WriteResponse(stream, new AuthPayloads.GenericFail("Malformed authentication data"));
+                    return;
+                }
+                
+                
                 var joinerIp = ((IPEndPoint)joiner.Client.RemoteEndPoint).Address.ToString();
                 
                 Tavern.Logger.Msg(ColorARGB.Chartreuse, $"User at {joinerIp} joining server");
