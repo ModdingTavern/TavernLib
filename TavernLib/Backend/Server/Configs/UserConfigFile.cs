@@ -11,7 +11,7 @@ public class UserConfig
 
     public class User
     {
-        [JsonProperty("user_id")] public long UserId { get; set; }
+        [JsonProperty("user_id")] public ulong UserId { get; set; }
         [JsonProperty("token")] public string Token { get; set; }
         [JsonProperty("registered_from")] public string RegisteredFrom { get; set; }
     }
