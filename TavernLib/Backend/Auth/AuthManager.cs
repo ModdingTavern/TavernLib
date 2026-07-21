@@ -131,7 +131,7 @@ namespace TavernLib.Backend.Auth
 
                 if (!CheckIfPermitted(joinerIp, typedPayload.Username)) return;
 
-                // Check if user had the wrong password
+                // Check if user has the wrong password
                 if (!string.IsNullOrWhiteSpace(_manager.ServerConfig.LastRead.PasswordHash))
                 {
                     if (typedPayload.Password != _manager.ServerConfig.LastRead.PasswordHash) return;
