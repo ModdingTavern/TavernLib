@@ -28,7 +28,7 @@ namespace TavernLib
                 
                 if (CommandLineArguments.Contains(CommandLineArguments.StartServerArgument))
                 {
-                    TavernServices.AddService(new TavernApiManager());
+                    if (!CommandLineArguments.Contains(TavernArgs.DontManageAuth)) TavernServices.AddService(new TavernApiManager());
                 }
 
             }
