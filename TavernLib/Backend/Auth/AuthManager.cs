@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using TavernLib.Backend.Api;
+using TavernLib.Backend.Server.Configs;
 
 namespace TavernLib.Backend.Auth
 {
@@ -125,14 +126,14 @@ namespace TavernLib.Backend.Auth
         {
             try
             {
+                _manager.UserConfig.ReadFromFile(); // Read to make sure validation can be up-to date
+                
                 var typedPayload = JsonConvert.DeserializeObject<AuthPayloads.AuthenticateRequest>(payload.ToString());
                 var joinerIp = ((IPEndPoint)joiner.Client.RemoteEndPoint).Address.ToString();
-
-                // Check if user is on the blacklist or whitelist, and if they have the right password
-                if (!await CheckIfPermitted(joinerIp, typedPayload, stream)) return;
-                // User has passed all authentication checks, set them up for joining
                 
-                await WriteResponse(stream, new AuthPayloads.AuthenticateOk());
+                if (!await CheckIfPermitted(joinerIp, typedPayload, stream)) return;
+
+                await PostPermissionCheck(stream, typedPayload, joinerIp);
             }
             catch (Exception e)
             {
@@ -141,6 +142,34 @@ namespace TavernLib.Backend.Auth
             }
         }
 
+        private async Task PostPermissionCheck(Stream stream, AuthPayloads.AuthenticateRequest payload, string ip)
+        {
+            if (_manager.UserConfig.LastRead.Users.TryGetValue(payload.Username, out var userData))
+            {
+                if (string.IsNullOrWhiteSpace(userData.Token)) userData.Token = payload.Token;
+                else if (payload.Token != userData.Token)
+                {
+                    await WriteResponse(stream, new AuthPayloads.GenericFail("Name taken by someone else, or you lost the token to your account!"));
+                    return;
+                }
+            }
+
+            else
+            {
+                _manager.UserConfig.LastRead.Users[payload.Username] = new UserConfig.User
+                {
+                    RegisteredFrom = ip,
+                    Token = payload.Token,
+                    UserId = 1000000000U + (ulong)_manager.UserConfig.LastRead.Users.Count
+                };
+
+                userData = _manager.UserConfig.LastRead.Users[payload.Username];
+            }
+            
+            _manager.UserConfig.WriteToFile();
+            await WriteResponse(stream, new AuthPayloads.AuthenticateOk(userData.UserId));
+        }
+        
         private async Task<bool> CheckIfPermitted(string joinerIp, AuthPayloads.AuthenticateRequest payload, Stream stream)
         {
             // Whitelist
