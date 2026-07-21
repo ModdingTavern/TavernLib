@@ -26,6 +26,7 @@ namespace TavernLib.Backend.Server
             
             _ = HeartbeatAsync();
             Application.quitting += CloseListing;
+            
         }
         
         
@@ -48,7 +49,7 @@ namespace TavernLib.Backend.Server
                 try
                 {
                     await Ping();
-                    await Task.Delay(TimeSpan.FromMinutes(1));
+                    await Task.Delay(TimeSpan.FromSeconds(3));
                 }
                 catch (Exception e)
                 {
