@@ -7,7 +7,7 @@ public class UserConfig
 {
     [JsonProperty("users")] public Dictionary<string, User> Users { get; set; } = new();
     [JsonProperty("whitelist")] public ListConfig Whitelist { get; set; } = new();
-    [JsonProperty("blacklist")] public BlacklistConfig Blacklist { get; set; } = new();
+    [JsonProperty("blacklist")] public ListConfig Blacklist { get; set; } = new();
 
     public class User
     {
@@ -20,11 +20,6 @@ public class UserConfig
     {
         [JsonProperty("usernames")] public List<string> Usernames { get; set; } = [];
         [JsonProperty("ips")] public List<string> Ips { get; set; } = [];
-    }
-
-    public class BlacklistConfig : ListConfig
-    {
-        [JsonProperty("user_ids")] public List<long> UserIds { get; set; } = [];
     }
 }
 
