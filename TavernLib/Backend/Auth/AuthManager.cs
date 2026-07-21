@@ -129,15 +129,26 @@ namespace TavernLib.Backend.Auth
                 var typedPayload = JsonConvert.DeserializeObject<AuthPayloads.AuthenticateRequest>(payload.ToString());
                 var joinerIp = ((IPEndPoint)joiner.Client.RemoteEndPoint).Address.ToString();
 
-                if (!CheckIfPermitted(joinerIp, typedPayload.Username)) return;
+                // Check if user is on the blacklist or whitelist
+                if (!await CheckIfPermitted(joinerIp, typedPayload.Username, stream)) return;
 
-                // Check if user has the wrong password
+                // Check if user is missing password/has the wrong password
                 if (!string.IsNullOrWhiteSpace(_manager.ServerConfig.LastRead.PasswordHash))
                 {
-                    if (typedPayload.Password != _manager.ServerConfig.LastRead.PasswordHash) return;
+                    if (string.IsNullOrWhiteSpace(typedPayload.Password))
+                    {
+                        await WriteResponse(stream, new AuthPayloads.NeedsPassword());
+                        return;
+                    }
+                    
+                    if (typedPayload.Password != _manager.ServerConfig.LastRead.PasswordHash)
+                    {
+                        await WriteResponse(stream, new AuthPayloads.WrongPassword());
+                        return;
+                    }
                 }
                 
-                await WriteAuthOk(stream);
+                await WriteResponse(stream, new AuthPayloads.AuthenticateOk());
             }
             catch (Exception e)
             {
@@ -146,7 +157,7 @@ namespace TavernLib.Backend.Auth
             }
         }
 
-        private bool CheckIfPermitted(string joinerIp, string username)
+        private async Task<bool> CheckIfPermitted(string joinerIp, string username, Stream stream)
         {
             // Whitelist
             if (_manager.UserConfig.LastRead.Whitelist.Ips.Count > 0 || _manager.UserConfig.LastRead.Whitelist.Usernames.Count > 0)
@@ -154,7 +165,12 @@ namespace TavernLib.Backend.Auth
                 var ipAllowed = _manager.UserConfig.LastRead.Whitelist.Ips.Contains(joinerIp);
                 var nameAllowed = _manager.UserConfig.LastRead.Whitelist.Usernames.Contains(username);
 
-                if (!ipAllowed && !nameAllowed) return false; // Not on the whitelist, return to graceful socket closing
+                // Not on the whitelist
+                if (!ipAllowed && !nameAllowed)
+                {
+                    await WriteResponse(stream, new AuthPayloads.NotWhitelisted());
+                    return false;
+                } 
             }
                 
             // Blacklist
@@ -163,17 +179,21 @@ namespace TavernLib.Backend.Auth
                 var ipBlocked = _manager.UserConfig.LastRead.Blacklist.Ips.Contains(joinerIp);
                 var nameBlocked = _manager.UserConfig.LastRead.Blacklist.Usernames.Contains(username);
 
-                if (ipBlocked || nameBlocked) return false; // On the blacklist, return to graceful socket closing
+                // On the blacklist
+                if (ipBlocked || nameBlocked)
+                {
+                    await WriteResponse(stream, new AuthPayloads.GenericFail("Blacklisted"));
+                    return false;
+                }
             }
 
             return true;
         }
         
-        private async Task WriteAuthOk(Stream stream)
+        private async Task WriteResponse(Stream stream, object response)
         {
             try
             {
-                var response = new AuthPayloads.AuthenticateOk();
                 var serializedResponse = JsonConvert.SerializeObject(response);
                 var encodedResponse = Encoding.UTF8.GetBytes(serializedResponse);
 
