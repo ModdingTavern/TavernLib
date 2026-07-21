@@ -23,11 +23,4 @@ public class UserConfig
     }
 }
 
-public class UserConfigFile(string filePath) : ServerConfigFile<UserConfig>(filePath)
-{
-    public override void ReadFromFile()
-    {
-        base.ReadFromFile();
-        
-    }
-}
+public class UserConfigFile(string filePath) : ServerConfigFile<UserConfig>(filePath);
