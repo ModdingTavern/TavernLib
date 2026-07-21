@@ -24,7 +24,7 @@ namespace TavernLib.Backend.Api
             ServerConfig.ReadFromFile();
             
             ListingController = new ServerListingController(this);
-            AuthManager = new AuthManager(this);
+            if (!CommandLineArguments.Contains(TavernArgs.DontManageAuth)) AuthManager = new AuthManager(this);
         }
     }
 }
