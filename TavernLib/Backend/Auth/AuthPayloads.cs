@@ -30,10 +30,37 @@ namespace TavernLib.Backend.Auth
         }
 
 
-        public struct AuthenticateOk
+        public readonly struct AuthenticateOk
         {
             [JsonProperty(PropertyName = "status")] private string Status => "ok";
             [JsonProperty(PropertyName = "user_id")] private ulong UserId => 2000000000 + (ulong)ServerHandler.Current.SaveUtility.PlayerSaveUtility.PlayerFolder.AllFiles.Count();
+        }
+
+
+        public readonly struct NeedsPassword
+        {
+            [JsonProperty(PropertyName = "status")] private string Status => "needs_password";
+        }
+        
+        
+        public readonly struct WrongPassword
+        {
+            [JsonProperty(PropertyName = "status")] private string Status => "wrong_password";
+            [JsonProperty(PropertyName = "message")] private string Message => "Wrong Password";
+        }
+        
+        
+        public readonly struct NotWhitelisted
+        {
+            [JsonProperty(PropertyName = "status")] private string Status => "not_whitelisted";
+            [JsonProperty(PropertyName = "message")] private string Message => "Not Whitelisted";
+        }
+        
+        
+        public readonly struct GenericFail(string message)
+        {
+            [JsonProperty(PropertyName = "status")] private string Status => "error";
+            [JsonProperty(PropertyName = "message")] private string Message => message;
         }
     }
 }
