@@ -23,7 +23,7 @@ namespace TavernLib.Backend.Api
             UserConfig.ReadFromFile();
             ServerConfig.ReadFromFile();
             
-            ListingController = new ServerListingController(this);
+            if (ServerConfig.LastRead.CommunityListed) ListingController = new ServerListingController(this);
             if (!CommandLineArguments.Contains(TavernArgs.DontManageAuth)) AuthManager = new AuthManager(this);
         }
     }
