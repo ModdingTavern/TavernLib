@@ -110,6 +110,8 @@
         <Reference Include="System.IdentityModel.Tokens.Jwt">
           <HintPath>..\..\..\..\Games\Alta\A Township Tale\A Township Tale_Data\Managed\System.IdentityModel.Tokens.Jwt.dll</HintPath>
         </Reference>
+        <Reference Include="System.IO.Compression" />
+        <Reference Include="System.IO.Compression.FileSystem" />
         <Reference Include="System.Net" />
         <Reference Include="System.Net.Http" />
         <Reference Include="System.Net.Http.WebRequest" />
@@ -137,6 +139,7 @@
         <Compile Include="Backend\Server\ServerListingController.cs" />
         <Compile Include="Backend\Server\ServerListingPayload.cs" />
         <Compile Include="Backend\BackendUtils.cs" />
+        <Compile Include="Debugging\DocumentModule.cs" />
         <Compile Include="Patches\PlayerLimitPatch.cs" />
         <Compile Include="Services\IService.cs" />
         <Compile Include="Patches\SecurityPatch.cs" />
