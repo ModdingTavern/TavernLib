@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using Alta.Networking;
 using Alta.Networking.Servers;
 using Alta.Serialization;
@@ -20,26 +21,34 @@ namespace TavernLib.Patches
         {
             try
             {
-                using var readingStream = stream.Clone() as Stream;
-
-                var requestJoinMessage = new RequestJoinMessage();
-                requestJoinMessage.Serialize(connection, readingStream);
-
-                if (requestJoinMessage.PlayerMode is PlayerMode.Fly or PlayerMode.AutoCam or PlayerMode.Unassigned)
+                try
                 {
-                    Tavern.Logger.Warning($"User kicked for bizarre mode");
-                    await ServerPlayerConnectionHandlerOld.PlayerDenied(connection, "Bizarre mode detected.");
+                    using var readingStream = stream.Clone() as Stream;
+
+                    var requestJoinMessage = new RequestJoinMessage();
+                    requestJoinMessage.Serialize(connection, readingStream);
+
+                    if (requestJoinMessage.PlayerMode is PlayerMode.Fly or PlayerMode.AutoCam or PlayerMode.Unassigned)
+                    {
+                        Tavern.Logger.Warning($"User kicked for bizarre mode");
+                        await ServerPlayerConnectionHandlerOld.PlayerDenied(connection, "Bizarre mode detected.");
+                        return;
+                    }
+                }
+                catch (Exception e)
+                {
+                    Tavern.Logger.Error($"Error in SecurityPatch {e}");
+                    await ServerPlayerConnectionHandlerOld.PlayerDenied(connection, "Unhandled error.");
                     return;
                 }
+            
+                ServerHandler.Current.playerJoinHandler.CheckApproved(connection, stream);
             }
             catch (Exception e)
             {
-                Tavern.Logger.Error($"Error in SecurityPatch {e}");
-                await ServerPlayerConnectionHandlerOld.PlayerDenied(connection, "Unhandled error.");
-                return;
+                Tavern.Logger.Error($"Error when handling FilterFlyCam security patch! {e}");
+                throw;
             }
-            
-            ServerHandler.Current.playerJoinHandler.CheckApproved(connection, stream);
         }
     }
 }
