@@ -25,8 +25,7 @@ namespace TavernLib.Backend.Server
             };
             
             _ = HeartbeatAsync();
-            Application.quitting += CloseListing;
-            
+            Application.wantsToQuit += StartClosingListing;
         }
         
         
@@ -77,6 +76,12 @@ namespace TavernLib.Backend.Server
 
         public async Task OpenListing() => await Ping();
         
+        
+        public bool StartClosingListing()
+        {
+            CloseListing();
+            return false;
+        }
         
         public void CloseListing()
         {
