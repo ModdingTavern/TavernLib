@@ -95,6 +95,8 @@ namespace TavernLib.Library.NetworkPrefabs {
         public bool isAssistGrabBlocked;
 
         public bool wrapHandForPickup = true;
+
+        public RotationMode PickupGrabPointRotationMode = RotationMode.Free;
     }
 
     public class HashRegistryFile {
@@ -448,6 +450,8 @@ namespace TavernLib.Library.NetworkPrefabs {
 
             GrabPoint[] grabPoints = new GrabPoint[grabPointsParent.childCount];
 
+            ItemSettings settings = RegisteredCustomItems[pickup.item];
+
             for (int i = 0; i < grabPointsParent.childCount; i++) {
                 Transform child = grabPointsParent.GetChild(i);
 
@@ -457,6 +461,11 @@ namespace TavernLib.Library.NetworkPrefabs {
                 GrabPoint grabPoint = new GrabPoint();
 
                 grabPoint.position = child.localPosition;
+                grabPoint.rotationEuler = child.localEulerAngles;
+
+                if (settings != null) {
+                    grabPoint.rotationMode = settings.PickupGrabPointRotationMode;
+                }
 
                 grabPoints[i] = grabPoint;
             }
