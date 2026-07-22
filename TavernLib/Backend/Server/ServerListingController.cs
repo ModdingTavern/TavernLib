@@ -60,7 +60,7 @@ namespace TavernLib.Backend.Server
         
         public async Task Ping()
         {
-            TavernLogger.Msg(ColorARGB.Chartreuse, "Server listing heartbeat");
+            TavernLogger.Msg("Server listing heartbeat");
             
             try
             {
@@ -85,7 +85,7 @@ namespace TavernLib.Backend.Server
         
         public void CloseListing()
         {
-            TavernLogger.Msg(ColorARGB.Chartreuse, "Server listing closing");
+            TavernLogger.Msg("Server listing closing");
             var payload = new
             {
                 listing_token = _manager.ServerConfig.LastRead.CommunityListingToken
