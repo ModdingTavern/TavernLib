@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using TavernLib.Library.NetworkPrefabs;
 using MelonLoader;
 using MelonLoader.Logging;
 using TavernLib.Debugging;
@@ -19,28 +20,49 @@ namespace TavernLib
 
         public override void OnEarlyInitializeMelon()
         {
+            TavernServices.Init();
             Logger = LoggerInstance;
             
-            SetupServices();
+            if (!CommandLineArguments.Contains(TavernArgs.NoApi) && CommandLineArguments.Contains(CommandLineArguments.StartServerArgument))
+            {
+                TrySetupServerConfig();
+            }
         }
         
-        private void SetupServices()
+        private void TrySetupServerConfig()
         {
-            try
-            {
-                if (CommandLineArguments.Contains("/debug_helper")) TavernServices.AddService(new DebugHelper());
+            Logger.Msg(ColorARGB.Azure, "Attempting to read server config YAML");
                 
-                if (CommandLineArguments.Contains(CommandLineArguments.StartServerArgument))
-                {
-                    if (!CommandLineArguments.Contains(TavernArgs.NoApi)) TavernServices.AddService(new ApiManager());
-                }
-
-            }
-            catch (Exception e)
+            if (File.Exists(TavernDirectories.ServerConfig))
             {
-                Logger.BigError($"Error when setting up base TavernLib services!!!!! {e}");
-                throw;
+                try
+                {
+                    string data = File.ReadAllText(TavernDirectories.ServerConfig);
+                        
+                    var deserializer = new DeserializerBuilder().Build();
+                    var output = deserializer.Deserialize<ServerConfig>(data);
+
+                    Logger.Msg(ColorARGB.Azure, "Instantiating server entry for API");
+                    TavernServices.ActiveEntry = new ServerEntry(output);
+                }
+                    
+                catch (Exception e)
+                {
+                    Logger.Error($"Error when loading server config! {e}");
+                    throw;
+                }
             }
+
+            else
+            {
+                Logger.Warning("The server was told to look for server-config.yaml, but one doesn't exist!");
+                Logger.Warning("Your server will NOT show up on the public discovery :/");
+            }
+        }
+        
+        public override void OnLateInitializeMelon()
+        {
+            NetworkPrefabManager.ReadHashIDsFile();
         }
     }
 }
