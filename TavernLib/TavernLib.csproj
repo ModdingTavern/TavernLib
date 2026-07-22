@@ -152,6 +152,7 @@
         <Compile Include="Tavern.cs" />
         <Compile Include="Properties\AssemblyInfo.cs"/>
         <Compile Include="TavernDirectories.cs" />
+        <Compile Include="TavernLogger.cs" />
     </ItemGroup>
     <ItemGroup>
       <None Include="App.config" />

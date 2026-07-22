@@ -31,7 +31,7 @@ namespace TavernLib.Backend.Server
         
         private async Task HeartbeatAsync()
         {
-            Tavern.Logger.Msg(ColorARGB.Chartreuse, "Started server listing lifecycle");
+            TavernLogger.Msg("Started server listing lifecycle");
             
             try
             {
@@ -39,7 +39,7 @@ namespace TavernLib.Backend.Server
             }
             catch (Exception e)
             {
-                Tavern.Logger.Error($"Error when publishing data to api! {e}");
+                TavernLogger.Error($"Error when publishing data to api! {e}");
                 throw;
             }
             
@@ -52,7 +52,7 @@ namespace TavernLib.Backend.Server
                 }
                 catch (Exception e)
                 {
-                    Tavern.Logger.Error($"Error when pinging server! {e}");
+                    TavernLogger.Error($"Error when pinging server! {e}");
                     throw;
                 }
             }
@@ -60,7 +60,7 @@ namespace TavernLib.Backend.Server
         
         public async Task Ping()
         {
-            Tavern.Logger.Msg(ColorARGB.Chartreuse, "Server listing heartbeat");
+            TavernLogger.Msg(ColorARGB.Chartreuse, "Server listing heartbeat");
             
             try
             {
@@ -69,7 +69,7 @@ namespace TavernLib.Backend.Server
             }
             catch (Exception e)
             {
-                Tavern.Logger.Error($"Error when pinging servers endpoint! {e}");
+                TavernLogger.Error($"Error when pinging servers endpoint! {e}");
                 throw;
             }
         }
@@ -85,7 +85,7 @@ namespace TavernLib.Backend.Server
         
         public void CloseListing()
         {
-            Tavern.Logger.Msg(ColorARGB.Chartreuse, "Server listing closing");
+            TavernLogger.Msg(ColorARGB.Chartreuse, "Server listing closing");
             var payload = new
             {
                 listing_token = _manager.ServerConfig.LastRead.CommunityListingToken

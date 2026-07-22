@@ -30,7 +30,7 @@ namespace TavernLib.Backend.Server.Configs
             }
             catch (Exception e)
             {
-                Tavern.Logger.Error($"Error when managing file responsible for type {nameof(T)}! {e}");
+                TavernLogger.Error($"Error when managing file responsible for type {nameof(T)}! {e}");
                 throw;
             }
         }
@@ -53,7 +53,7 @@ namespace TavernLib.Backend.Server.Configs
             }
             catch (Exception e)
             {
-                Tavern.Logger.Error($"Error when managing file responsible for type {nameof(T)}! {e}");
+                TavernLogger.Error($"Error when managing file responsible for type {nameof(T)}! {e}");
                 throw;
             }
         }

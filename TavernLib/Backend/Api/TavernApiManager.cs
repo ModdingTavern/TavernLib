@@ -18,19 +18,19 @@ namespace TavernLib.Backend.Api
         
         public TavernApiManager()
         {
-            Tavern.Logger.Msg(ColorARGB.Chartreuse, "Creating configs");
+            TavernLogger.Msg("Creating configs");
             UserConfig = new UserConfigFile(Path.Combine(TavernDirectories.ModdingTavern, "users.json"));
             ServerConfig = new ServerSettingsConfig(Path.Combine(TavernDirectories.ModdingTavern, "server_settings.json"));
             
-            Tavern.Logger.Msg(ColorARGB.Chartreuse, "Reading configs");
+            TavernLogger.Msg("Reading configs");
             UserConfig.ReadFromFile();
             ServerConfig.ReadFromFile();
             
-            Tavern.Logger.Msg(ColorARGB.Chartreuse, "Creating controllers");
+            TavernLogger.Msg("Creating controllers");
             if (ServerConfig.LastRead.CommunityListed) ListingController = new ServerListingController(this);
             if (!CommandLineArguments.Contains(TavernArgs.DontManageAuth)) AuthManager = new AuthManager(this);
             
-            Tavern.Logger.Msg(ColorARGB.Chartreuse, $"Listing Is Active: {ListingController != null}, Managing Auth: {AuthManager != null}");
+            TavernLogger.Msg($"Listing Is Active: {ListingController != null}, Managing Auth: {AuthManager != null}");
         }
     }
 }

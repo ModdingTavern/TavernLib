@@ -26,22 +26,22 @@ namespace TavernLib.Patches
 
         private static async void FilterJoinRequest(Connection connection, Stream stream)
         {
-            Tavern.Logger.Msg(ColorARGB.Chartreuse, $"Filtering join request for user at IP {connection.IpAddress}");
+            TavernLogger.Msg($"Filtering join request for user at IP {connection.IpAddress}");
 
             try
             {
-                Tavern.Logger.Msg(ColorARGB.Chartreuse, "Filtering flycam joiners");
+                TavernLogger.Msg("Filtering flycam joiners");
                 if (!await FilterFlyCam(connection, stream)) return;
 
-                Tavern.Logger.Msg(ColorARGB.Chartreuse, "User passed flycam check, checking for valid account token");
+                TavernLogger.Msg("User passed flycam check, checking for valid account token");
                 if (!await FilterInvalidTokens(connection, stream)) return;
 
-                Tavern.Logger.Msg(ColorARGB.Chartreuse, "User passed token check, moving onto vanilla check");
+                TavernLogger.Msg("User passed token check, moving onto vanilla check");
                 ServerHandler.Current.playerJoinHandler.CheckApproved(connection, stream);
             }
             catch (Exception e)
             {
-                Tavern.Logger.Error($"Error when filtering join request! {e}");
+                TavernLogger.Error($"Error when filtering join request! {e}");
                 await ServerPlayerConnectionHandlerOld.PlayerDenied(connection, "Error when checking authenticity");
                 throw;
             }
@@ -55,7 +55,7 @@ namespace TavernLib.Patches
                 var requestJoinMessage = new RequestJoinMessage();
                 requestJoinMessage.Serialize(connection, readingStream);
 
-                Tavern.Logger.Msg(ColorARGB.Chartreuse, $"User trying to join with JWT {requestJoinMessage.UserCredentials}");
+                TavernLogger.Msg($"User trying to join with JWT {requestJoinMessage.UserCredentials}");
 
                 var token = JWTUtility.CreateFromString(requestJoinMessage.UserCredentials, true);
                 var tavernToken = token.Claims.FirstOrDefault(claim => claim.Type == "TavernToken")?.Value;
@@ -72,7 +72,7 @@ namespace TavernLib.Patches
 
             catch (Exception e)
             {
-                Tavern.Logger.Error($"Error in FilterInvalidTokens! {e}");
+                TavernLogger.Error($"Error in FilterInvalidTokens! {e}");
                 throw;
             }
         }
@@ -88,14 +88,14 @@ namespace TavernLib.Patches
 
                 if (requestJoinMessage.PlayerMode is PlayerMode.Fly or PlayerMode.AutoCam or PlayerMode.Unassigned)
                 {
-                    Tavern.Logger.Warning($"User kicked for bizarre mode");
+                    TavernLogger.Warn($"User kicked for bizarre mode");
                     await ServerPlayerConnectionHandlerOld.PlayerDenied(connection, "Bizarre mode detected.");
                     return false;
                 }
             }
             catch (Exception e)
             {
-                Tavern.Logger.Error($"Error in FilterFlyCam {e}");
+                TavernLogger.Error($"Error in FilterFlyCam {e}");
                 await ServerPlayerConnectionHandlerOld.PlayerDenied(connection, "FlyCam filter error.");
                 return false;
             }

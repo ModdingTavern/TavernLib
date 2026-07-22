@@ -13,7 +13,7 @@ namespace TavernLib.Services
         {
             if (ServiceEntries.ContainsKey(typeof(T)))
             {
-                Tavern.Logger.Msg(ColorARGB.Bisque, "Cannot add multiple services of the same type!");
+                TavernLogger.Warn("Cannot add multiple services of the same type!");
                 return;
             }
 
@@ -24,7 +24,7 @@ namespace TavernLib.Services
         {
             if (ServiceEntries.TryGetValue(typeof(T), out var result)) return result as T;
             
-            Tavern.Logger.Error($"Service of type {nameof(T)} was not found!");
+            TavernLogger.Error($"Service of type {nameof(T)} was not found!");
             return null;
         }
     }

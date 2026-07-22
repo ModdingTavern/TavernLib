@@ -30,14 +30,14 @@ namespace TavernLib.Backend.Auth
 
         private async Task StartAuthCycle()
         {
-            Tavern.Logger.Msg(ColorARGB.Chartreuse, "Starting auth cycle");
+            TavernLogger.Msg("Starting auth cycle");
             
             _listener.Start();
 
             var stopOnQuit = new CancellationTokenSource();
             UnityEngine.Application.quitting += stopOnQuit.Cancel;
 
-            Tavern.Logger.Msg(ColorARGB.Chartreuse, "Starting auth listening cycle");
+            TavernLogger.Msg("Starting auth listening cycle");
             while (!stopOnQuit.IsCancellationRequested)
             {
                 TcpClient client = await _listener.AcceptTcpClientAsync();
@@ -47,7 +47,7 @@ namespace TavernLib.Backend.Auth
 
         private async Task<string> ReadFullPayload(Stream stream, CancellationToken token)
         {
-            Tavern.Logger.Msg(ColorARGB.Chartreuse, "Reading payload");
+            TavernLogger.Msg("Reading payload");
             
             var buffer = new byte[4096];
             var totalRead = 0;
@@ -78,7 +78,7 @@ namespace TavernLib.Backend.Auth
 
         private async Task InterpretTcpStream(TcpClient client)
         {
-            Tavern.Logger.Msg(ColorARGB.Chartreuse, $"Connected to TcpClient ({(client.Client.RemoteEndPoint as IPEndPoint)?.Address}), interpreting stream");
+            TavernLogger.Msg($"Connected to TcpClient ({(client.Client.RemoteEndPoint as IPEndPoint)?.Address}), interpreting stream");
             
             using var stream = client.GetStream();
             using var timeout = new CancellationTokenSource();
@@ -88,7 +88,7 @@ namespace TavernLib.Backend.Auth
 
             try
             {
-                Tavern.Logger.Msg(ColorARGB.Chartreuse, "Finding payload type");
+                TavernLogger.Msg("Finding payload type");
                 
                 var jsonPayload = JObject.Parse(payload);
 
@@ -96,17 +96,17 @@ namespace TavernLib.Backend.Auth
                 else if (jsonPayload.ContainsKey("username")) await ManageAuthRequest(stream, jsonPayload, client);
                 else
                 {
-                    Tavern.Logger.Warning($"Unknown payload sent to AuthManager {jsonPayload}");
+                    TavernLogger.Warn($"Unknown payload sent to AuthManager {jsonPayload}");
                 }
             }
             catch (Exception e)
             {
-                Tavern.Logger.Error($"Error decoding TCP stream {e}");
+                TavernLogger.Error($"Error decoding TCP stream {e}");
             }
 
             finally
             {
-                Tavern.Logger.Msg(ColorARGB.Chartreuse, "Closing connection to joining user");
+                TavernLogger.Msg("Closing connection to joining user");
                 client.Close();
             }
         }
@@ -139,8 +139,8 @@ namespace TavernLib.Backend.Auth
                 
                 var joinerIp = ((IPEndPoint)joiner.Client.RemoteEndPoint).Address.ToString();
                 
-                Tavern.Logger.Msg(ColorARGB.Chartreuse, $"User at {joinerIp} joining server");
-                Tavern.Logger.Msg(ColorARGB.Chartreuse, $"With payload {payload}");
+                TavernLogger.Msg($"User at {joinerIp} joining server");
+                TavernLogger.Msg($"With payload {payload}");
                 
                 if (!await CheckIfPermitted(joinerIp, typedPayload, stream)) return;
 
@@ -148,7 +148,7 @@ namespace TavernLib.Backend.Auth
             }
             catch (Exception e)
             {
-                Tavern.Logger.Error($"Error when managing join request {e}");
+                TavernLogger.Error($"Error when managing join request {e}");
                 throw;
             }
         }
@@ -160,7 +160,7 @@ namespace TavernLib.Backend.Auth
                 if (string.IsNullOrWhiteSpace(userData.Token)) userData.Token = payload.Token;
                 else if (payload.Token != userData.Token)
                 {
-                    Tavern.Logger.Msg(ColorARGB.Chartreuse, $"Joining user at IP {ip} tried to take username");
+                    TavernLogger.Msg($"Joining user at IP {ip} tried to take username");
                     await WriteResponse(stream, new AuthPayloads.GenericFail("Name taken by someone else, or you lost the token to your account!"));
                     return;
                 }
@@ -168,7 +168,7 @@ namespace TavernLib.Backend.Auth
 
             else
             {
-                Tavern.Logger.Msg(ColorARGB.Chartreuse, $"Joining user at IP {ip} being allotted a slot in Users.json");
+                TavernLogger.Msg($"Joining user at IP {ip} being allotted a slot in Users.json");
                 _manager.UserConfig.LastRead.Users[payload.Username.ToLower()] = new UserConfig.User
                 {
                     RegisteredFrom = ip,
@@ -179,14 +179,14 @@ namespace TavernLib.Backend.Auth
                 userData = _manager.UserConfig.LastRead.Users[payload.Username.ToLower()];
             }
             
-            Tavern.Logger.Msg(ColorARGB.Chartreuse, "Writing any potential changes during join to file");
+            TavernLogger.Msg("Writing any potential changes during join to file");
             _manager.UserConfig.WriteToFile();
             await WriteResponse(stream, new AuthPayloads.AuthenticateOk(userData.UserId));
         }
         
         private async Task<bool> CheckIfPermitted(string joinerIp, AuthPayloads.AuthenticateRequest payload, Stream stream)
         {
-            Tavern.Logger.Msg(ColorARGB.Chartreuse, $"Checking if joining user {joinerIp} can join");
+            TavernLogger.Msg($"Checking if joining user {joinerIp} can join");
             // Whitelist
             if (_manager.UserConfig.LastRead.Whitelist.Ips.Count > 0 || _manager.UserConfig.LastRead.Whitelist.Usernames.Count > 0)
             {
@@ -195,7 +195,7 @@ namespace TavernLib.Backend.Auth
                 
                 if (!ipAllowed && !nameAllowed)
                 {
-                    Tavern.Logger.Msg(ColorARGB.Chartreuse, $"Joining user at {joinerIp} was not on the whitelist");
+                    TavernLogger.Msg($"Joining user at {joinerIp} was not on the whitelist");
                     await WriteResponse(stream, new AuthPayloads.NotWhitelisted());
                     return false;
                 } 
@@ -209,7 +209,7 @@ namespace TavernLib.Backend.Auth
                 
                 if (ipBlocked || nameBlocked)
                 {
-                    Tavern.Logger.Msg(ColorARGB.Chartreuse, $"Joining user at {joinerIp} was on the blacklist");
+                    TavernLogger.Msg($"Joining user at {joinerIp} was on the blacklist");
                     await WriteResponse(stream, new AuthPayloads.GenericFail("Blacklisted"));
                     return false;
                 }
@@ -220,7 +220,7 @@ namespace TavernLib.Backend.Auth
             {
                 if (string.IsNullOrWhiteSpace(payload.Password))
                 {
-                    Tavern.Logger.Msg(ColorARGB.Chartreuse, $"Joining user at {joinerIp} gave no password to server");
+                    TavernLogger.Msg($"Joining user at {joinerIp} gave no password to server");
                     await WriteResponse(stream, new AuthPayloads.NeedsPassword());
                     return false;
                 }
@@ -228,13 +228,13 @@ namespace TavernLib.Backend.Auth
                 // Hash the user provided password again to match Tavern Launcher's password setup
                 if (BackendUtils.HashDigest(payload.Password) != _manager.ServerConfig.LastRead.PasswordHash)
                 {
-                    Tavern.Logger.Msg(ColorARGB.Chartreuse, $"Joining user at {joinerIp} gave the wrong password");
+                    TavernLogger.Msg($"Joining user at {joinerIp} gave the wrong password");
                     await WriteResponse(stream, new AuthPayloads.WrongPassword());
                     return false;
                 }
             }
 
-            Tavern.Logger.Msg(ColorARGB.Chartreuse, $"Joining user at {joinerIp} passed all authentication checks");
+            TavernLogger.Msg($"Joining user at {joinerIp} passed all authentication checks");
             return true;
         }
         
@@ -245,13 +245,13 @@ namespace TavernLib.Backend.Auth
                 var serializedResponse = JsonConvert.SerializeObject(response);
                 var encodedResponse = Encoding.UTF8.GetBytes(serializedResponse);
 
-                Tavern.Logger.Msg(ColorARGB.Chartreuse, $"Writing response to joining client: {serializedResponse}");
+                TavernLogger.Msg($"Writing response to joining client: {serializedResponse}");
                 
                 await stream.WriteAsync(encodedResponse, 0, encodedResponse.Length);
             }
             catch (Exception e)
             {
-                Tavern.Logger.Error($"Error when sending auth OK {e}");
+                TavernLogger.Error($"Error when sending auth OK {e}");
                 throw;
             }
         }
