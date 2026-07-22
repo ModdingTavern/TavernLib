@@ -64,7 +64,7 @@ namespace TavernLib.Backend.Server
             
             try
             {
-                var payload = ServerListingPayload.FromConfig(_manager.ServerConfig);
+                var payload = ServerListingPayload.FromConfig(_manager.ServerConfig, _manager.TavernConfig);
                 await _apiClient.PostAsync(BackendUtils.ServerUri, new HttpClientExtensions.JsonContent(payload));
             }
             catch (Exception e)

@@ -135,6 +135,7 @@
         <Compile Include="Backend\Auth\AuthPayloads.cs" />
         <Compile Include="Backend\Server\Configs\ServerConfigFile.cs" />
         <Compile Include="Backend\Server\Configs\ServerSettingsConfig.cs" />
+        <Compile Include="Backend\Server\Configs\TavernServerConfig.cs" />
         <Compile Include="Backend\Server\Configs\UserConfigFile.cs" />
         <Compile Include="Backend\Server\ServerListingController.cs" />
         <Compile Include="Backend\Server\ServerListingPayload.cs" />

@@ -12,6 +12,7 @@ public class ServerSettings
     [JsonProperty(PropertyName = "community_listed")] public bool CommunityListed { get; private set; }
     [JsonProperty(PropertyName = "max_players")] public int MaxPlayers { get; private set; }
     [JsonProperty(PropertyName = "community_listing_token")] public string CommunityListingToken { get; internal set; } = "";
+    [JsonProperty(PropertyName = "public_hostname")] public string PublicHostname { get; private set; }
 }
 
 public class ServerSettingsConfig(string filePath) : ServerConfigFile<ServerSettings>(filePath)

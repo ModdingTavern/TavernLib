@@ -14,17 +14,20 @@ namespace TavernLib.Backend.Api
         
         public UserConfigFile UserConfig { get; private set; }
         public ServerSettingsConfig ServerConfig { get; private set; }
+        public TavernServerConfig TavernConfig { get; private set; }
         
         
         public TavernApiManager()
         {
             TavernLogger.Msg("Creating configs");
-            UserConfig = new UserConfigFile(Path.Combine(TavernDirectories.ModdingTavern, "users.json"));
-            ServerConfig = new ServerSettingsConfig(Path.Combine(TavernDirectories.ModdingTavern, "server_settings.json"));
+            UserConfig = new UserConfigFile(Path.Combine(TavernDirectories.ModdingTavern, TavernDirectories.Users));
+            ServerConfig = new ServerSettingsConfig(Path.Combine(TavernDirectories.ModdingTavern, TavernDirectories.ServerSettings));
+            TavernConfig = new TavernServerConfig(Path.Combine(TavernDirectories.ModdingTavern, TavernDirectories.TavernServer));
             
             TavernLogger.Msg("Reading configs");
             UserConfig.ReadFromFile();
             ServerConfig.ReadFromFile();
+            TavernConfig.ReadFromFile();
             
             TavernLogger.Msg("Creating controllers");
             if (ServerConfig.LastRead.CommunityListed) ListingController = new ServerListingController(this);
