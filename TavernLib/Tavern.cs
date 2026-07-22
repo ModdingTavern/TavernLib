@@ -29,7 +29,7 @@ namespace TavernLib
                 
                 if (CommandLineArguments.Contains(CommandLineArguments.StartServerArgument))
                 {
-                    Logger.Msg(ColorARGB.Chartreuse, "Booting TavernLib in server mode");
+                    TavernLogger.Msg("Booting TavernLib in server mode");
                     TavernServices.AddService(new TavernApiManager());
                 }
 
