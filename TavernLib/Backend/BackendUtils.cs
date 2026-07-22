@@ -16,5 +16,16 @@ namespace TavernLib.Backend
             var byteArray = hash.ComputeHash(Encoding.UTF8.GetBytes(input));
             return BitConverter.ToString(byteArray).Replace("-", "").ToLower();
         }
+        
+        public static string TokenUrlSafe(int nbytes = 32)
+        {
+            var bytes = new byte[nbytes];
+            using (var rng = RandomNumberGenerator.Create()) { rng.GetBytes(bytes); }
+
+            return Convert.ToBase64String(bytes)
+                .Replace('+', '-')
+                .Replace('/', '_')
+                .TrimEnd('=');
+        }
     }
 }
