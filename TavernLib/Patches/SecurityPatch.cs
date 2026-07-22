@@ -1,10 +1,16 @@
 ﻿using System;
+using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
+using Alta.Api.DataTransferModels.Converters;
 using Alta.Networking;
 using Alta.Networking.Servers;
 using Alta.Serialization;
 using HarmonyLib;
 using MelonLoader.Logging;
+using TavernLib.Backend.Api;
+using TavernLib.Services;
 
 namespace TavernLib.Patches
 {
@@ -27,10 +33,10 @@ namespace TavernLib.Patches
                 Tavern.Logger.Msg(ColorARGB.Chartreuse, "Filtering flycam joiners");
                 if (!await FilterFlyCam(connection, stream)) return;
 
-                Tavern.Logger.Msg("User passed flycam check, checking for valid account token");
+                Tavern.Logger.Msg(ColorARGB.Chartreuse, "User passed flycam check, checking for valid account token");
                 if (!await FilterInvalidTokens(connection, stream)) return;
 
-                Tavern.Logger.Msg("User passed token check, moving onto vanilla check");
+                Tavern.Logger.Msg(ColorARGB.Chartreuse, "User passed token check, moving onto vanilla check");
                 ServerHandler.Current.playerJoinHandler.CheckApproved(connection, stream);
             }
             catch (Exception e)
@@ -43,6 +49,32 @@ namespace TavernLib.Patches
 
         private static async Task<bool> FilterInvalidTokens(Connection connection, Stream stream)
         {
+            try
+            {
+                using var readingStream = stream.Clone() as Stream;
+                var requestJoinMessage = new RequestJoinMessage();
+                requestJoinMessage.Serialize(connection, readingStream);
+
+                Tavern.Logger.Msg(ColorARGB.Chartreuse, $"User trying to join with JWT {requestJoinMessage.UserCredentials}");
+
+                var token = JWTUtility.CreateFromString(requestJoinMessage.UserCredentials, true);
+                var tavernToken = token.Claims.FirstOrDefault(claim => claim.Type == "TavernToken")?.Value;
+                var id = ulong.Parse(token.Claims.FirstOrDefault(claim => claim.Type == "UserId")?.Value ?? "0");
+                var username = token.Claims.FirstOrDefault(claim => claim.Type == "Username")?.Value ?? "";
+                
+                var users = TavernServices.GetService<TavernApiManager>().UserConfig.LastRead.Users;
+                if (users.TryGetValue(username.ToLowerInvariant(), out var user) && user.UserId == id && user.Token == tavernToken) return true;
+                
+                await ServerPlayerConnectionHandlerOld.PlayerDenied(connection, "Bad token");
+                return false;
+
+            }
+
+            catch (Exception e)
+            {
+                Tavern.Logger.Error($"Error in FilterInvalidTokens! {e}");
+                throw;
+            }
         }
 
         private static async Task<bool> FilterFlyCam(Connection connection, Stream stream)
@@ -63,8 +95,8 @@ namespace TavernLib.Patches
             }
             catch (Exception e)
             {
-                Tavern.Logger.Error($"Error in SecurityPatch {e}");
-                await ServerPlayerConnectionHandlerOld.PlayerDenied(connection, "Unhandled error.");
+                Tavern.Logger.Error($"Error in FilterFlyCam {e}");
+                await ServerPlayerConnectionHandlerOld.PlayerDenied(connection, "FlyCam filter error.");
                 return false;
             }
 
