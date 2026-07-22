@@ -8,26 +8,15 @@ namespace TavernLib.Services
 {
     public static class TavernServices
     {
-        private static readonly Dictionary<Type, IService> ServiceEntries = new();
-
-
-        public static void AddService<T>(T instance) where T : IService
-        {
-            if (ServiceEntries.ContainsKey(typeof(T)))
-            {
-                Tavern.Logger.Msg(ColorARGB.Bisque, "Cannot add multiple services of the same type!");
-                return;
-            }
+        public static DebugHelper DebugHelper { get; private set; }
+        public static ServerEntry ActiveEntry { get; set; }
 
             ServiceEntries[typeof(T)] = instance;
         }
-        
-        public static IService GetService<T>() where T : IService
+
+        internal static void Init()
         {
-            if (ServiceEntries.TryGetValue(typeof(T), out var result)) return result;
-            
-            Tavern.Logger.Error($"Service of type {nameof(T)} was not found!");
-            return null;
+            if (CommandLineArguments.Contains("/debug_helper")) DebugHelper = new();
         }
     }
 }

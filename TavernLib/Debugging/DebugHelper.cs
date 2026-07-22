@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace TavernLib.Debugging
 {
-    public class DebugHelper : IService
+    public class DebugHelper
     {
         private readonly NLogCatcher _logCatcher = new();
 
