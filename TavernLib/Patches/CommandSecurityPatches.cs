@@ -7,9 +7,10 @@ namespace TavernLib.Patches;
 public class CommandSecurityPatches
 {
     [HarmonyPatch(typeof(WebServerThread), MethodType.Constructor), HarmonyPrefix]
-    public static void CancelWebServerThread()
+    public static bool CancelWebServerThread()
     {
         TavernLogger.Msg("Cancelling instantiation of WebServerThread");
+        return false;
     }
     
     
