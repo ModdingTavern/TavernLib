@@ -1,4 +1,10 @@
-﻿using Alta.WebServer;
+﻿using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Alta.Api.DataTransferModels.Models.Responses;
+using Alta.Console;
+using Alta.WebServer;
 using ATT.Character.QuickAccessMenu;
 using HarmonyLib;
 
@@ -26,6 +32,16 @@ public class CommandSecurityPatches
     {
         TavernLogger.Msg($"Closing ServerRemoteConsole instantly (unnecessary handler)");
         __instance.CloseConsole(__instance.remoteConsole);
+        return false;
+    }
+    
+    [HarmonyPatch(typeof(WebSocketCommandHandler), nameof(WebSocketCommandHandler.GetCurrentServerPermissionsForLoggedInUser)), HarmonyPrefix]
+    public static bool SortPermissions(ref Task<IEnumerable<GroupPermissions>> __result)
+    {
+        __result = Task.FromResult(new List<GroupPermissions>
+        {
+            GroupPermissions.Console
+        }.AsEnumerable());
         return false;
     }
 }
