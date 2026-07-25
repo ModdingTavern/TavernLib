@@ -20,7 +20,12 @@ public class Tavern : MelonPlugin
             
         SetupServices();
     }
-        
+
+    public override void OnInitializeMelon()
+    {
+        Alta.Console.CommandService.CommandCollection.Collect(System.Reflection.Assembly.GetExecutingAssembly());
+    }
+
     private void SetupServices()
     {
         try

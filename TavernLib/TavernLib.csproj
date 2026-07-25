@@ -77,6 +77,9 @@
         <Reference Include="Alta.Singletons">
             <HintPath>..\Dependencies\Alta.Singletons.dll</HintPath>
         </Reference>
+        <Reference Include="Alta.Values">
+          <HintPath>..\Dependencies\Alta.Values.dll</HintPath>
+        </Reference>
         <Reference Include="kcp2k">
             <HintPath>..\Dependencies\kcp2k.dll</HintPath>
         </Reference>
@@ -140,7 +143,9 @@
         <Compile Include="Backend\Server\ServerListingController.cs" />
         <Compile Include="Backend\Server\ServerListingPayload.cs" />
         <Compile Include="Backend\BackendUtils.cs" />
-        <Compile Include="Debugging\DocumentModule.cs" />
+        <Compile Include="ModulePorts\ChunkCommandModule.cs" />
+        <Compile Include="ModulePorts\DocumentModule.cs" />
+        <Compile Include="ModulePorts\PlayerCommandModule.cs" />
         <Compile Include="Patches\CommandSecurityPatches.cs" />
         <Compile Include="Patches\PlayerLimitPatch.cs" />
         <Compile Include="Services\IService.cs" />
