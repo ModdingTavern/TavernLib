@@ -143,7 +143,7 @@
         <Compile Include="Debugging\DocumentModule.cs" />
         <Compile Include="Patches\PlayerLimitPatch.cs" />
         <Compile Include="Services\IService.cs" />
-        <Compile Include="Patches\SecurityPatch.cs" />
+        <Compile Include="Patches\PlayerJoinFilter.cs" />
         <Compile Include="TavernArgs.cs" />
         <Compile Include="Debugging\DebugHelper.cs" />
         <Compile Include="Debugging\NLogCatcher.cs" />

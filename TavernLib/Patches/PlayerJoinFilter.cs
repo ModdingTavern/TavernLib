@@ -15,7 +15,7 @@ using TavernLib.Services;
 namespace TavernLib.Patches
 {
     [HarmonyPatch]
-    public static class SecurityPatch
+    public static class PlayerJoinFilter
     {
         [HarmonyPatch(typeof(ServerPlayerConnectionHandlerOld), nameof(ServerPlayerConnectionHandlerOld.InitializeConnection)), HarmonyPrefix]
         public static bool FlyCamFilter(Connection connection)
