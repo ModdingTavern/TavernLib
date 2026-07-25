@@ -65,7 +65,7 @@ namespace TavernLib.Patches
                 var users = TavernServices.GetService<TavernApiManager>().UserConfig.LastRead.Users;
                 if (users.TryGetValue(username.ToLowerInvariant(), out var user) && user.UserId == id && user.Token == tavernToken) return true;
                 
-                await ServerPlayerConnectionHandlerOld.PlayerDenied(connection, "Bad token");
+                await ServerPlayerConnectionHandlerOld.PlayerDenied(connection, "Data mismatch or account not found");
                 return false;
 
             }
