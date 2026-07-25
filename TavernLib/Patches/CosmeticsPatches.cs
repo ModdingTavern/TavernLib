@@ -1,21 +1,14 @@
-﻿using System.Diagnostics;
-using Alta.Customization;
+﻿using Alta.WebServer;
 using HarmonyLib;
 
-namespace TavernLib.Patches
+namespace TavernLib.Patches;
+
+[HarmonyPatch]
+public class CosmeticsPatches
 {
-    [HarmonyPatch]
-    public class CosmeticsPatches
+    [HarmonyPatch(typeof(WebServerThread), MethodType.Constructor), HarmonyPrefix]
+    public static void CancelWebServerThread()
     {
-        [HarmonyPatch(typeof(ServerHostingGameMode), nameof(ServerHostingGameMode.OnStartSucceeded)), HarmonyPostfix]
-        public static void LoadCosmeticsIntoRamIfAppropriate()
-        {
-            var stopwatch = new Stopwatch();
-            stopwatch.Start();
-            TavernLogger.Msg("Loading cosmetics into RAM for server...");
-            Purchasable.LoadAllIntoRAM();
-            stopwatch.Stop();
-            TavernLogger.Msg($"Time taken to load cosmetics into RAM: {stopwatch.Elapsed.TotalMilliseconds}ms");
-        }
+        TavernLogger.Msg("Cancelling instantiation of WebServerThread");
     }
 }
