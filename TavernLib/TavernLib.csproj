@@ -148,6 +148,7 @@
         <Compile Include="ModulePorts\PlayerCommandModule.cs" />
         <Compile Include="Patches\CommandSecurityPatches.cs" />
         <Compile Include="Patches\PlayerLimitPatch.cs" />
+        <Compile Include="Patches\SelectFixPatch.cs" />
         <Compile Include="Services\IService.cs" />
         <Compile Include="Patches\PlayerJoinFilter.cs" />
         <Compile Include="TavernArgs.cs" />
