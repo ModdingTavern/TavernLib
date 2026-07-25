@@ -21,5 +21,11 @@ public class CommandSecurityPatches
         return false;
     }
     
-    
+    [HarmonyPatch(typeof(ServerConsoleManager), nameof(ServerConsoleManager.StartRemoteConsole)), HarmonyPrefix]
+    public static bool InstantCloseRemoteConsole(ServerConsoleManager __instance)
+    {
+        TavernLogger.Msg($"Closing ServerRemoteConsole instantly (unnecessary handler)");
+        __instance.CloseConsole(__instance.remoteConsole);
+        return false;
+    }
 }
