@@ -53,7 +53,6 @@ public class ServerListingController
             catch (Exception e)
             {
                 TavernLogger.Error($"Error when pinging server! {e}");
-                throw;
             }
         }
     }
