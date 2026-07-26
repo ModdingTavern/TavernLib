@@ -15,18 +15,19 @@ using TavernLib.Services;
 using UnityEngine;
 
 
-[assembly: MelonInfo(typeof(TavernLib.Tavern), "TavernLib", "0.0.1", "Tavern Team", "https://github.com/ModdingTavern/TavernLib")]
+[assembly: MelonInfo(typeof(TavernLib.Tavern), "TavernLib", "v1.4.0", "Tavern Team", "https://github.com/ModdingTavern/TavernLib")]
 namespace TavernLib;
 
 public class Tavern : MelonPlugin
 {
     internal static MelonLogger.Instance Logger { get; private set; }
+    public const string Version = "v1.4.0";
 
 
     public override void OnEarlyInitializeMelon()
     {
         Logger = LoggerInstance;
-            
+
         SetupServices();
     }
 
@@ -55,10 +56,12 @@ public class Tavern : MelonPlugin
         try
         {
             if (CommandLineArguments.Contains("/debug_helper")) TavernServices.AddService(new DebugHelper());
-                
+
             if (CommandLineArguments.Contains(CommandLineArguments.StartServerArgument))
             {
                 TavernLogger.Msg("Booting TavernLib in server mode");
+                if (!CommandLineArguments.Contains(TavernArgs.DontManageAuth))
+                    TavernLib.Patches.TeenyPatches.EnsureConsoleToken();
                 TavernServices.AddService(new TavernApiManager());
             }
 

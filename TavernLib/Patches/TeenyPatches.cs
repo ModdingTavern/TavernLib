@@ -1,23 +1,28 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IdentityModel.Tokens.Jwt;
-using System.IO;
-using System.Linq;
-using System.Net;
-using System.Security.Claims;
-using System.Threading;
-using System.Threading.Tasks;
-using Alta.Api.Client.HighLevel;
+﻿using Alta.Api.Client.HighLevel;
 using Alta.Api.DataTransferModels.Converters;
 using Alta.Api.DataTransferModels.Models.Responses;
 using Alta.Api.DataTransferModels.Utility;
 using Alta.Customization;
+using Alta.Intelligence;
 using Alta.Networking;
 using Alta.Networking.Scripts.Player;
 using Alta.Networking.Servers;
 using Alta.QuickAccessActions;
 using HarmonyLib;
 using MelonLoader.Logging;
+using System;
+using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
+using System.IO;
+using System.Linq;
+using System.Net;
+using System.Net.PeerToPeer;
+using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using TriangleNet;
 
 namespace TavernLib.Patches;
 
@@ -67,7 +72,7 @@ public class TeenyPatches
             File.WriteAllBytes(Path.Combine(folder, presetId + ".preset"), bytes);
         }
         catch (Exception) { }
-            
+
         __result = Task.FromResult(new UserPresetDataInfo { PresetId = presetId, ByteSize = byteSize, Data = data });
         return false;
     }
@@ -82,7 +87,7 @@ public class TeenyPatches
             if (File.Exists(file)) File.Delete(file);
         }
         catch (Exception) { }
-            
+
         __result = Task.CompletedTask;
         return false;
     }
@@ -99,14 +104,14 @@ public class TeenyPatches
         __result = Task.CompletedTask;
         return false;
     }
-        
+
     [HarmonyPatch(typeof(PurchasedList), nameof(PurchasedList.ValidatePlayersOwnedItems)), HarmonyPrefix]
     public static bool AlwaysAllowAnyItem(ref Task<bool> __result)
     {
         __result = Task.FromResult(true);
         return false;
     }
-        
+
     [HarmonyPatch(typeof(PurchasedList), nameof(PurchasedList.Refresh)), HarmonyPrefix]
     public static bool DisallowPaidCosmetics(ref Task __result, PurchasedList __instance)
     {
@@ -158,10 +163,131 @@ public class TeenyPatches
 
     #region ServerConsoleManager
 
+    private static readonly string ServerSecretPath = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+        "TheModdingTavern", "server_secret.key");
+
+    private static byte[] _serverSecret;
+    private static byte[] ServerSecret => _serverSecret ??= LoadOrCreateServerSecret();
+
+    private static byte[] HexToBytes(string hex)
+    {
+        byte[] result = new byte[hex.Length / 2];
+        for (int i = 0; i < result.Length; i++)
+            result[i] = Convert.ToByte(hex.Substring(i * 2, 2), 16);
+        return result;
+    }
+
+    private static string BytesToHex(byte[] bytes)
+    {
+        var sb = new System.Text.StringBuilder(bytes.Length * 2);
+        foreach (byte b in bytes)
+            sb.Append(b.ToString("x2"));
+        return sb.ToString();
+    }
+
+    private static byte[] LoadOrCreateServerSecret()
+    {
+        try
+        {
+            if (File.Exists(ServerSecretPath))
+            {
+                byte[] existing = HexToBytes(File.ReadAllText(ServerSecretPath).Trim());
+                if (existing.Length == 32) return existing;
+            }
+        }
+        catch { }
+
+        byte[] secret = new byte[32];
+        using (var rng = RandomNumberGenerator.Create())
+            rng.GetBytes(secret);
+
+        try
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(ServerSecretPath));
+            File.WriteAllText(ServerSecretPath, BytesToHex(secret));
+        }
+        catch { }
+
+        return secret;
+    }
+
+    private static string B64Url(byte[] bytes) =>
+        Convert.ToBase64String(bytes).Replace('+', '-').Replace('/', '_').TrimEnd('=');
+
+    private static string BuildConsoleToken(byte[] secret)
+    {
+        string header = B64Url(Encoding.UTF8.GetBytes("{\"alg\":\"HS256\",\"typ\":\"JWT\"}"));
+        string payload = B64Url(Encoding.UTF8.GetBytes(
+            "{\"UserId\":\"0\",\"Username\":\"Server\",\"role\":\"Access\"," +
+            "\"is_verified\":\"True\",\"is_member\":\"True\",\"server_id\":\"-1\"," +
+            "\"Policy\":[\"offline\",\"play_offline\",\"server_access_pre_alpha\"," +
+            "\"game_access_public\",\"server_owner\",\"debug_features\"," +
+            "\"database_admin\",\"reuse_refresh_tokens\"]," +
+            "\"exp\":9999999999,\"iss\":\"AltaWebAPI\",\"aud\":\"AltaClient\"}"));
+        string sigInput = $"{header}.{payload}";
+        byte[] sig;
+        using (var hmac = new HMACSHA256(secret))
+            sig = hmac.ComputeHash(Encoding.UTF8.GetBytes(sigInput));
+        return $"{header}.{payload}.{B64Url(sig)}";
+    }
+
+    internal static void EnsureConsoleToken()
+    {
+        try
+        {
+            string tokenPath = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                "TheModdingTavern", "console_token.txt");
+            if (File.Exists(tokenPath)) return;
+            byte[] secret = ServerSecret;
+            Directory.CreateDirectory(Path.GetDirectoryName(tokenPath));
+            File.WriteAllText(tokenPath, BuildConsoleToken(secret));
+        }
+        catch { }
+    }
+
     [HarmonyPatch(typeof(ServerConsoleManager), nameof(ServerConsoleManager.ValidateConsoleToken)), HarmonyPrefix]
     public static bool ValidateConsoleToken(JwtSecurityToken token, ref Task<bool> __result)
     {
-        __result = Task.FromResult(token.Claims.FirstOrDefault((Claim c) => c.Type == "Policy" && c.Value == "server_owner") != null);
+        bool hasOwnerClaim = token.Claims.Any(c => c.Type == "Policy" && c.Value == "server_owner");
+        if (!hasOwnerClaim)
+        {
+            __result = Task.FromResult(false);
+            return false;
+        }
+
+        byte[] secret = ServerSecret;
+        if (secret == null)
+        {
+            __result = Task.FromResult(false);
+            return false;
+        }
+
+        try
+        {
+            string raw = token.Claims.FirstOrDefault(c => c.Type == "raw")?.Value;
+            if (raw == null)
+            {
+                __result = Task.FromResult(false);
+                return false;
+            }
+
+            int lastDot = raw.LastIndexOf('.');
+            string sigInput = raw.Substring(0, lastDot);
+            string sigClaim = raw.Substring(lastDot + 1);
+
+            byte[] expectedSig;
+            using (var hmac = new HMACSHA256(secret))
+                expectedSig = hmac.ComputeHash(Encoding.UTF8.GetBytes(sigInput));
+
+            __result = Task.FromResult(string.Equals(sigClaim, B64Url(expectedSig), StringComparison.Ordinal));
+        }
+        catch
+        {
+            __result = Task.FromResult(false);
+        }
+
         return false;
     }
 
@@ -176,7 +302,7 @@ public class TeenyPatches
         {
             var jwtToken = JWTUtility.CreateFromString(tokenString);
             var value = jwtToken.Claims.First(c => c.Type == "Username").Value;
-                
+
             if (int.Parse(jwtToken.Claims.First(c => c.Type == "UserId").Value) != playerId)
             {
                 __result = Task.FromResult(ServerPlayerConnectionHandlerOld.PlayerJoinResult.CreateDeniedResult("Token was for a different user"));

@@ -14,7 +14,8 @@ public struct ServerListingPayload
     [JsonProperty(PropertyName = "player_count")] public int PlayerCount { get; private set; }
     [JsonProperty(PropertyName = "community_listed")] public bool CommunityListed { get; private set; }
     [JsonProperty(PropertyName = "hostname")] public string HostName { get; private set; }
-        
+    [JsonProperty(PropertyName = "version")] public string Version { get; private set; }
+
     public static ServerListingPayload FromConfig(ServerSettingsConfig config, TavernServerConfig tavernConfig)
     {
         return new ServerListingPayload
@@ -26,7 +27,8 @@ public struct ServerListingPayload
             HasPassword = !string.IsNullOrWhiteSpace(config.LastRead.PasswordHash),
             PlayerCount = ServerHandler.Current?.Connections ?? 0,
             CommunityListed = config.LastRead.CommunityListed,
-            HostName = config.LastRead.PublicHostname
+            HostName = config.LastRead.PublicHostname,
+            Version = Tavern.Version
         };
     }
 }
