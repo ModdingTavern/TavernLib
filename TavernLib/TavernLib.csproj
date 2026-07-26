@@ -212,6 +212,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TavernDirectories.cs" />
     <Compile Include="TavernLogger.cs" />
+    <Compile Include="Patches\SelectFixPatch.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
