@@ -1,25 +1,28 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IdentityModel.Tokens.Jwt;
-using System.IO;
-using System.Linq;
-using System.Net;
-using System.Security.Claims;
-using System.Security.Cryptography;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using Alta.Api.Client.HighLevel;
+﻿using Alta.Api.Client.HighLevel;
 using Alta.Api.DataTransferModels.Converters;
 using Alta.Api.DataTransferModels.Models.Responses;
 using Alta.Api.DataTransferModels.Utility;
 using Alta.Customization;
+using Alta.Intelligence;
 using Alta.Networking;
 using Alta.Networking.Scripts.Player;
 using Alta.Networking.Servers;
 using Alta.QuickAccessActions;
 using HarmonyLib;
 using MelonLoader.Logging;
+using System;
+using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
+using System.IO;
+using System.Linq;
+using System.Net;
+using System.Net.PeerToPeer;
+using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using TriangleNet;
 
 namespace TavernLib.Patches;
 
@@ -211,6 +214,38 @@ public class TeenyPatches
 
     private static string B64Url(byte[] bytes) =>
         Convert.ToBase64String(bytes).Replace('+', '-').Replace('/', '_').TrimEnd('=');
+
+    private static string BuildConsoleToken(byte[] secret)
+    {
+        string header = B64Url(Encoding.UTF8.GetBytes("{\"alg\":\"HS256\",\"typ\":\"JWT\"}"));
+        string payload = B64Url(Encoding.UTF8.GetBytes(
+            "{\"UserId\":\"0\",\"Username\":\"Server\",\"role\":\"Access\"," +
+            "\"is_verified\":\"True\",\"is_member\":\"True\",\"server_id\":\"-1\"," +
+            "\"Policy\":[\"offline\",\"play_offline\",\"server_access_pre_alpha\"," +
+            "\"game_access_public\",\"server_owner\",\"debug_features\"," +
+            "\"database_admin\",\"reuse_refresh_tokens\"]," +
+            "\"exp\":9999999999,\"iss\":\"AltaWebAPI\",\"aud\":\"AltaClient\"}"));
+        string sigInput = $"{header}.{payload}";
+        byte[] sig;
+        using (var hmac = new HMACSHA256(secret))
+            sig = hmac.ComputeHash(Encoding.UTF8.GetBytes(sigInput));
+        return $"{header}.{payload}.{B64Url(sig)}";
+    }
+
+    internal static void EnsureConsoleToken()
+    {
+        try
+        {
+            string tokenPath = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                "TheModdingTavern", "console_token.txt");
+            if (File.Exists(tokenPath)) return;
+            byte[] secret = ServerSecret;
+            Directory.CreateDirectory(Path.GetDirectoryName(tokenPath));
+            File.WriteAllText(tokenPath, BuildConsoleToken(secret));
+        }
+        catch { }
+    }
 
     [HarmonyPatch(typeof(ServerConsoleManager), nameof(ServerConsoleManager.ValidateConsoleToken)), HarmonyPrefix]
     public static bool ValidateConsoleToken(JwtSecurityToken token, ref Task<bool> __result)

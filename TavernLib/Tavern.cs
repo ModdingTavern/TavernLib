@@ -17,7 +17,7 @@ public class Tavern : MelonPlugin
     public override void OnEarlyInitializeMelon()
     {
         Logger = LoggerInstance;
-            
+
         SetupServices();
     }
 
@@ -31,10 +31,12 @@ public class Tavern : MelonPlugin
         try
         {
             if (CommandLineArguments.Contains("/debug_helper")) TavernServices.AddService(new DebugHelper());
-                
+
             if (CommandLineArguments.Contains(CommandLineArguments.StartServerArgument))
             {
                 TavernLogger.Msg("Booting TavernLib in server mode");
+                if (!CommandLineArguments.Contains(TavernArgs.DontManageAuth))
+                    TavernLib.Patches.TeenyPatches.EnsureConsoleToken();
                 TavernServices.AddService(new TavernApiManager());
             }
 
