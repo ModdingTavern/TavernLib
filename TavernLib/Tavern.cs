@@ -1,9 +1,18 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using Alta.Chunks;
+using Alta.Console.Commands;
+using Alta.Networking;
 using MelonLoader;
 using MelonLoader.Logging;
+using MonoMod.RuntimeDetour;
 using TavernLib.Backend.Api;
 using TavernLib.Debugging;
+using TavernLib.Patches;
 using TavernLib.Services;
+using UnityEngine;
 
 
 [assembly: MelonInfo(typeof(TavernLib.Tavern), "TavernLib", "0.0.1", "Tavern Team", "https://github.com/ModdingTavern/TavernLib")]
@@ -23,9 +32,24 @@ public class Tavern : MelonPlugin
 
     public override void OnInitializeMelon()
     {
-        Alta.Console.CommandService.CommandCollection.Collect(System.Reflection.Assembly.GetExecutingAssembly());
+        Alta.Console.CommandService.CommandCollection.Collect(Assembly.GetExecutingAssembly());
+        
     }
 
+    public override void OnLateInitializeMelon()
+    {
+        SetupSelectionFixPatch();
+    }
+
+
+    private void SetupSelectionFixPatch()
+    {
+        var findObjectsMethod = typeof(SelectionCommandModule).GetMethod(nameof(SelectionCommandModule.FindObjects), BindingFlags.Static | BindingFlags.NonPublic);
+        var selectionFixMethod = typeof(SelectFixPatch).GetMethod(nameof(SelectFixPatch.SelectionFix), BindingFlags.Static | BindingFlags.Public);
+        
+        _ = new Hook(findObjectsMethod, selectionFixMethod);
+    }
+    
     private void SetupServices()
     {
         try
