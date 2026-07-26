@@ -1,7 +1,6 @@
 ﻿using System.Diagnostics;
 using Alta.Customization;
 using HarmonyLib;
-using MelonLoader.Logging;
 
 namespace TavernLib.Patches
 {
@@ -13,10 +12,10 @@ namespace TavernLib.Patches
         {
             var stopwatch = new Stopwatch();
             stopwatch.Start();
-            Tavern.Logger.Msg(ColorARGB.Chartreuse, "Loading cosmetics into RAM for server...");
+            TavernLogger.Msg("Loading cosmetics into RAM for server...");
             Purchasable.LoadAllIntoRAM();
             stopwatch.Stop();
-            Tavern.Logger.Msg(ColorARGB.Chartreuse, $"Time taken to load cosmetics into RAM: {stopwatch.Elapsed.TotalMilliseconds}ms");
+            TavernLogger.Msg($"Time taken to load cosmetics into RAM: {stopwatch.Elapsed.TotalMilliseconds}ms");
         }
     }
 }

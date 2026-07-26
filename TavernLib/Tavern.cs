@@ -1,12 +1,9 @@
 using System;
-using System.IO;
 using MelonLoader;
 using MelonLoader.Logging;
+using TavernLib.Backend.Api;
 using TavernLib.Debugging;
 using TavernLib.Services;
-using TavernLib.Services.Api;
-using TavernLib.Services.Server;
-using YamlDotNet.Serialization;
 
 
 [assembly: MelonInfo(typeof(TavernLib.Tavern), "TavernLib", "0.0.1", "Tavern Team", "https://github.com/ModdingTavern/TavernLib")]
@@ -32,7 +29,8 @@ namespace TavernLib
                 
                 if (CommandLineArguments.Contains(CommandLineArguments.StartServerArgument))
                 {
-                    if (!CommandLineArguments.Contains(TavernArgs.NoApi)) TavernServices.AddService(new ApiManager());
+                    TavernLogger.Msg("Booting TavernLib in server mode");
+                    TavernServices.AddService(new TavernApiManager());
                 }
 
             }

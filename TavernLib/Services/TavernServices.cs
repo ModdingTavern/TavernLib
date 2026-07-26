@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using MelonLoader.Logging;
-using TavernLib.Debugging;
-using TavernLib.Services.Server;
 
 namespace TavernLib.Services
 {
@@ -15,18 +13,18 @@ namespace TavernLib.Services
         {
             if (ServiceEntries.ContainsKey(typeof(T)))
             {
-                Tavern.Logger.Msg(ColorARGB.Bisque, "Cannot add multiple services of the same type!");
+                TavernLogger.Warn("Cannot add multiple services of the same type!");
                 return;
             }
 
             ServiceEntries[typeof(T)] = instance;
         }
         
-        public static IService GetService<T>() where T : IService
+        public static T GetService<T>() where T : class, IService
         {
-            if (ServiceEntries.TryGetValue(typeof(T), out var result)) return result;
+            if (ServiceEntries.TryGetValue(typeof(T), out var result)) return result as T;
             
-            Tavern.Logger.Error($"Service of type {nameof(T)} was not found!");
+            TavernLogger.Error($"Service of type {nameof(T)} was not found!");
             return null;
         }
     }
