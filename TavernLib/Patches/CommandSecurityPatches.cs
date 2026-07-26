@@ -13,12 +13,13 @@ namespace TavernLib.Patches;
 [HarmonyPatch]
 public class CommandSecurityPatches
 {
-    [HarmonyPatch(typeof(WebServerThread), MethodType.Constructor, [typeof(int)]), HarmonyPrefix]
+    // TODO: Cancel console creation here
+    /*[HarmonyPatch(typeof(WebServerThread), MethodType.Constructor, [typeof(int)]), HarmonyPrefix]
     public static bool CancelWebServerThread()
     {
         TavernLogger.Msg("Cancelling instantiation of WebServerThread");
         return false;
-    }
+    }*/
 
     [HarmonyPatch(typeof(CommandSync), nameof(CommandSync.RouteCommand)), HarmonyPrefix]
     public static bool CancelRouteCommand(string command) // Unsure of if this is necessary
