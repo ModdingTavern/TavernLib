@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using Newtonsoft.Json;
 
 namespace TavernLib.Backend.Server.Configs;
@@ -14,12 +16,17 @@ public class UserConfig
         [JsonProperty("user_id")] public ulong UserId { get; set; }
         [JsonProperty("token")] public string Token { get; set; }
         [JsonProperty("registered_from")] public string RegisteredFrom { get; set; }
+        [JsonProperty("roles")] public List<string> Roles { get; set; } = [];
+
+        public bool HasRole(string role) =>
+            Roles != null && Roles.Any(r => string.Equals(r, role, StringComparison.OrdinalIgnoreCase));
     }
 
     public class ListConfig
     {
         [JsonProperty("usernames")] public List<string> Usernames { get; set; } = [];
         [JsonProperty("ips")] public List<string> Ips { get; set; } = [];
+        [JsonProperty("user_ids")] public List<ulong> UserIds { get; set; } = [];
     }
 }
 
