@@ -231,7 +231,7 @@ public class TeenyPatches
         try
         {
             string tokenPath = Path.Combine(TavernDirectories.ModdingTavern, "console_token.txt");
-            if (File.Exists(tokenPath)) return;
+            if (File.Exists(tokenPath) && File.Exists(ServerSecretPath)) return;
             byte[] secret = ServerSecret;
             Directory.CreateDirectory(Path.GetDirectoryName(tokenPath));
             File.WriteAllText(tokenPath, BuildConsoleToken(secret));
