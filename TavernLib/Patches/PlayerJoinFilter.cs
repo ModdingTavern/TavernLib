@@ -6,6 +6,7 @@ using Alta.Networking;
 using Alta.Networking.Servers;
 using Alta.Serialization;
 using HarmonyLib;
+using Newtonsoft.Json;
 using TavernLib.Backend.Api;
 using TavernLib.Services;
 
@@ -98,5 +99,11 @@ public static class PlayerJoinFilter
         }
 
         return true;
+    }
+    
+    [HarmonyPatch(typeof(ConfirmJoinMessage), MethodType.Constructor, [typeof(bool), typeof(bool), typeof(ClientJoinResult), typeof(JoinedServerInfo), typeof(string)]), HarmonyPostfix]
+    public static void LogDisconnectAttempts(bool isAllowed, bool isDoingPrerequisites, ClientJoinResult joinResult, JoinedServerInfo serverInfo, string error, ref ConfirmJoinMessage __instance)
+    {
+        TavernLogger.Warn($"ConfirmJoinMessage created {JsonConvert.SerializeObject(__instance, Formatting.Indented)}");
     }
 }
