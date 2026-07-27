@@ -158,9 +158,7 @@ public class TeenyPatches
 
     #region ServerConsoleManager
 
-    private static readonly string ServerSecretPath = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-        "TheModdingTavern", "server_secret.key");
+    private static readonly string ServerSecretPath = Path.Combine(TavernDirectories.ModdingTavern, "server_secret.key");
 
     private static byte[] _serverSecret;
     private static byte[] ServerSecret => _serverSecret ??= LoadOrCreateServerSecret();
@@ -222,8 +220,9 @@ public class TeenyPatches
             "\"exp\":9999999999,\"iss\":\"AltaWebAPI\",\"aud\":\"AltaClient\"}"));
         string sigInput = $"{header}.{payload}";
         byte[] sig;
-        using (var hmac = new HMACSHA256(secret))
+        using (var hmac = new HMACSHA256(secret)) 
             sig = hmac.ComputeHash(Encoding.UTF8.GetBytes(sigInput));
+        
         return $"{header}.{payload}.{B64Url(sig)}";
     }
 
@@ -231,9 +230,7 @@ public class TeenyPatches
     {
         try
         {
-            string tokenPath = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                "TheModdingTavern", "console_token.txt");
+            string tokenPath = Path.Combine(TavernDirectories.ModdingTavern, "console_token.txt");
             if (File.Exists(tokenPath)) return;
             byte[] secret = ServerSecret;
             Directory.CreateDirectory(Path.GetDirectoryName(tokenPath));
