@@ -28,7 +28,6 @@ public class Tavern : MelonPlugin
     public override void OnInitializeMelon()
     {
         Alta.Console.CommandService.CommandCollection.Collect(Assembly.GetExecutingAssembly());
-        
     }
 
     public override void OnLateInitializeMelon()
