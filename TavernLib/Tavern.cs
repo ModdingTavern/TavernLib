@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Reflection;
 using Alta.Console.Commands;
 using MelonLoader;
@@ -23,6 +24,15 @@ public class Tavern : MelonPlugin
         Logger = LoggerInstance;
 
         SetupServices();
+
+        var consolePath = Path.Combine(TavernDirectories.ModdingTavern, "console_token.txt");
+        if (File.Exists(consolePath))
+        {
+            if (File.ReadAllText(consolePath) == "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VySWQiOiIwIiwiVXNlcm5hbWUiOiJTZXJ2ZXIiLCJyb2xlIjoiQWNjZXNzIiwiaXNfdmVyaWZpZWQiOiJUcnVlIiwiaXNfbWVtYmVyIjoiVHJ1ZSIsIlBvbGljeSI6WyJvZmZsaW5lIiwicGxheV9vZmZsaW5lIiwic2VydmVyX2FjY2Vzc19wcmVfYWxwaGEiLCJnYW1lX2FjY2Vzc19wdWJsaWMiLCJzZXJ2ZXJfb3duZXIiLCJkZWJ1Z19mZWF0dXJlcyIsImRhdGFiYXNlX2FkbWluIiwicmV1c2VfcmVmcmVzaF90b2tlbnMiXSwiZXhwIjo5OTk5OTk5OTk5LCJpc3MiOiJBbHRhV2ViQVBJIiwiYXVkIjoiQWx0YUNsaWVudCJ9.wLKduc-OVFM0jgi_aeHwzazy70AO8KXyT5-YVkpPm4g")
+            {
+                File.Delete(consolePath); // Regenerate unsigned tokens
+            }
+        }
     }
 
     public override void OnInitializeMelon()
