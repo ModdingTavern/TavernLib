@@ -6,7 +6,6 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using MelonLoader.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using TavernLib.Backend.Api;

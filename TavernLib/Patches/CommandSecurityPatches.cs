@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using Alta.Api.Client.LowLevel;
 using Alta.Api.DataTransferModels.Models.Responses;
 using Alta.Console;
-using Alta.WebServer;
 using ATT.Character.QuickAccessMenu;
 using HarmonyLib;
 

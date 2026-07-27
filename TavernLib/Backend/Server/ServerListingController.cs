@@ -2,7 +2,6 @@
 using System.Net.Http;
 using System.Threading.Tasks;
 using Alta.Api.DataTransferModels.Extensions;
-using MelonLoader.Logging;
 using TavernLib.Backend.Api;
 using UnityEngine;
 

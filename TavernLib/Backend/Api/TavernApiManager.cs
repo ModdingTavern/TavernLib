@@ -1,5 +1,4 @@
 ﻿using System.IO;
-using MelonLoader.Logging;
 using TavernLib.Backend.Auth;
 using TavernLib.Backend.Server;
 using TavernLib.Backend.Server.Configs;

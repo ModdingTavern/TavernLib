@@ -1,18 +1,12 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
-using Alta.Chunks;
 using Alta.Console.Commands;
-using Alta.Networking;
 using MelonLoader;
-using MelonLoader.Logging;
 using MonoMod.RuntimeDetour;
 using TavernLib.Backend.Api;
 using TavernLib.Debugging;
 using TavernLib.Patches;
 using TavernLib.Services;
-using UnityEngine;
 
 
 [assembly: MelonInfo(typeof(TavernLib.Tavern), "TavernLib", "v1.4.0", "Tavern Team", "https://github.com/ModdingTavern/TavernLib")]

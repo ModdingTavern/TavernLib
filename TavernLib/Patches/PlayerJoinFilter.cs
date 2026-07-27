@@ -1,14 +1,11 @@
 ﻿using System;
-using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
-using System.Security.Claims;
 using System.Threading.Tasks;
 using Alta.Api.DataTransferModels.Converters;
 using Alta.Networking;
 using Alta.Networking.Servers;
 using Alta.Serialization;
 using HarmonyLib;
-using MelonLoader.Logging;
 using TavernLib.Backend.Api;
 using TavernLib.Services;
 

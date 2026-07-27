@@ -1,5 +1,4 @@
-﻿using Alta.Networking.Servers;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 
 namespace TavernLib.Backend.Server.Configs;
 

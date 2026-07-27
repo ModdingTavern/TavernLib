@@ -3,26 +3,21 @@ using Alta.Api.DataTransferModels.Converters;
 using Alta.Api.DataTransferModels.Models.Responses;
 using Alta.Api.DataTransferModels.Utility;
 using Alta.Customization;
-using Alta.Intelligence;
 using Alta.Networking;
 using Alta.Networking.Scripts.Player;
 using Alta.Networking.Servers;
 using Alta.QuickAccessActions;
 using HarmonyLib;
-using MelonLoader.Logging;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Net.PeerToPeer;
-using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using TriangleNet;
 
 namespace TavernLib.Patches;
 
