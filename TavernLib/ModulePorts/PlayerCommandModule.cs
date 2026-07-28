@@ -66,9 +66,13 @@ public static class PlayerCommandModule
 			return result;
 			string GetData(PlayerSave save)
 			{
+				if (save.PrefabData == null)
+				{
+					CommandService.ThrowError("That save has no inventory data");
+				}
 				byte[] array = new byte[save.PrefabData.Length * 4];
 				Buffer.BlockCopy(save.PrefabData, 0, array, 0, array.Length);
-				return Encoding.UTF8.GetString(array);
+				return Convert.ToBase64String(array);
 			}
 		}
 
@@ -94,11 +98,32 @@ public static class PlayerCommandModule
 			{
 				CommandService.ThrowError("Can't load inventory for players without a save");
 			}
+			if (string.IsNullOrWhiteSpace(save))
+			{
+				CommandService.ThrowError("No inventory data was provided");
+			}
+			byte[] bytes = null;
+			try
+			{
+				bytes = Convert.FromBase64String(save);
+			}
+			catch (FormatException)
+			{
+				CommandService.ThrowError("Inventory data is not valid base64");
+			}
+			if (bytes.Length == 0 || bytes.Length % 4 != 0)
+			{
+				CommandService.ThrowError("Inventory data is not a whole number of 32 bit words");
+			}
+			PlayerSave playerSave = obj.Content as PlayerSave;
+			if (playerSave == null)
+			{
+				CommandService.ThrowError("That save file does not contain player save data");
+			}
 			logger.Trace("Loading inventory for " + id);
-			byte[] bytes = Encoding.UTF8.GetBytes(save);
 			uint[] array = new uint[bytes.Length / 4];
 			Buffer.BlockCopy(bytes, 0, array, 0, bytes.Length);
-			(obj.Content as PlayerSave).PrefabData = array;
+			playerSave.PrefabData = array;
 			obj.QueueUnload();
 		}
 
@@ -111,7 +136,8 @@ public static class PlayerCommandModule
 			{
 				if (player?.PlayerController == null)
 				{
-					yield return null;
+					logger.Trace("Skipping a player with no live controller.");
+					continue;
 				}
 				yield return new Inventory(player);
 			}
@@ -371,6 +397,10 @@ public static class PlayerCommandModule
 		[Alias(new string[] { "offlvl", "lvl" })]
 		private static async Task AddOfflineLevels(UserInfoAccess userInfo, ProgressionPath path, int levels)
 		{
+			if (OfflinePlayerProgressionHandler.instance == null)
+			{
+				CommandService.ThrowError("Offline progression handler is not available");
+			}
 			if (await userInfo.IsValid())
 			{
 				int playerID = await userInfo.GetIdentifier();
@@ -382,6 +412,10 @@ public static class PlayerCommandModule
 		[Alias(new string[] { "printofflvl", "print-lvl" })]
 		private static void PrintOfflineLevels()
 		{
+			if (OfflinePlayerProgressionHandler.instance == null)
+			{
+				CommandService.ThrowError("Offline progression handler is not available");
+			}
 			OfflinePlayerProgressionHandler.instance.LogCurrent();
 		}
 	}
@@ -425,6 +459,10 @@ public static class PlayerCommandModule
 	{
 		foreach (Player player in players)
 		{
+			if (player == null)
+			{
+				continue;
+			}
 			player.Kick(reason);
 		}
 	}
@@ -433,14 +471,14 @@ public static class PlayerCommandModule
 	[Command("list", "Lists all players")]
 	private static IEnumerable<UserInfo> List()
 	{
-		return Player.AllPlayers.Select(player => player.UserInfo.UserInfo);
+		return Player.AllPlayers.Where(player => player?.UserInfo != null).Select(player => player.UserInfo.UserInfo).ToList();
 	}
 
 	[ServerOnly]
 	[Command("list-detailed", "Lists all players")]
 	private static IEnumerable<UserInfoDetailed> ListDetailed()
 	{
-		return Player.AllPlayers.Select(player => new UserInfoDetailed(player));
+		return Player.AllPlayers.Where(player => player?.UserInfo != null).Select(player => new UserInfoDetailed(player)).ToList();
 	}
 
 	[ServerOnly]
@@ -454,10 +492,19 @@ public static class PlayerCommandModule
 	[Command("message", "Sends a message to a player")]
 	private static void Message(PlayerList players, string message, float duration = 10f)
 	{
+		PlayerCommunicationManager communicationManager = PlayerCommunicationManager.Instance;
+		if (communicationManager == null)
+		{
+			CommandService.ThrowError("Player communication manager is not available yet");
+		}
 		logger.Trace("Sending message to " + players.CountOrName() + ".");
 		foreach (var player in players)
 		{
-			PlayerCommunicationManager.Instance.SendMessageToPlayer(player, message, duration);
+			if (player == null)
+			{
+				continue;
+			}
+			communicationManager.SendMessageToPlayer(player, message, duration);
 		}
 	}
 
@@ -468,16 +515,24 @@ public static class PlayerCommandModule
 		logger.Trace("Killing " + players.CountOrName() + ".");
 		foreach (var player in players)
 		{
-			var playerCharacter = player.PlayerController as PlayerCharacter;
-			bool value = PlayerHealth.ArePlayersAvoidingDamage.Value;
-			bool isIgnoringDamage = playerCharacter != null && playerCharacter.IsIgnoringDamage;
-			PlayerHealth.ArePlayersAvoidingDamage.Value = false;
-			if (playerCharacter != null)
+			var playerCharacter = player?.PlayerController as PlayerCharacter;
+			if (playerCharacter == null || playerCharacter.Health == null)
 			{
-				playerCharacter.IsIgnoringDamage = false;
-				float playerDamageTakenMultiplier = ServerHandler.Current.ServerConfig.Settings.PlayerDamageTakenMultiplier;
-				ServerHandler.Current.ServerConfig.Settings.PlayerDamageTakenMultiplier = 1f;
+				logger.Trace("Skipping a player with no live character.");
+				continue;
+			}
+			bool value = PlayerHealth.ArePlayersAvoidingDamage.Value;
+			bool isIgnoringDamage = playerCharacter.IsIgnoringDamage;
+			float playerDamageTakenMultiplier = ServerHandler.Current.ServerConfig.Settings.PlayerDamageTakenMultiplier;
+			PlayerHealth.ArePlayersAvoidingDamage.Value = false;
+			playerCharacter.IsIgnoringDamage = false;
+			ServerHandler.Current.ServerConfig.Settings.PlayerDamageTakenMultiplier = 1f;
+			try
+			{
 				playerCharacter.Health.ReceiveDamage(float.MaxValue, 0f, new DamageData(DamageSource.Command));
+			}
+			finally
+			{
 				ServerHandler.Current.ServerConfig.Settings.PlayerDamageTakenMultiplier = playerDamageTakenMultiplier;
 				PlayerHealth.ArePlayersAvoidingDamage.Value = value;
 				playerCharacter.IsIgnoringDamage = isIgnoringDamage;
@@ -507,18 +562,31 @@ public static class PlayerCommandModule
 		logger.Trace("Crippling " + players.CountOrName() + ".");
 		foreach (Player player in players)
 		{
-			PlayerCharacter playerCharacter = player.PlayerController as PlayerCharacter;
-			if (player == null)
+			PlayerCharacter playerCharacter = player?.PlayerController as PlayerCharacter;
+			if (playerCharacter == null)
 			{
-				break;
+				logger.Trace("Skipping a player with no live character.");
+				continue;
+			}
+			PlayerHealth health = playerCharacter.Health;
+			if (health == null || health.CrippleStat == null)
+			{
+				logger.Trace("Skipping a player with no cripple stat.");
+				continue;
 			}
 			bool value = PlayerHealth.ArePlayersAvoidingDamage.Value;
 			bool isIgnoringDamage = playerCharacter.IsIgnoringDamage;
 			PlayerHealth.ArePlayersAvoidingDamage.Value = false;
 			playerCharacter.IsIgnoringDamage = false;
-			playerCharacter.Health.CrippleStat.Base -= 10000f;
-			PlayerHealth.ArePlayersAvoidingDamage.Value = value;
-			playerCharacter.IsIgnoringDamage = isIgnoringDamage;
+			try
+			{
+				health.CrippleStat.Base -= 10000f;
+			}
+			finally
+			{
+				PlayerHealth.ArePlayersAvoidingDamage.Value = value;
+				playerCharacter.IsIgnoringDamage = isIgnoringDamage;
+			}
 		}
 	}
 
@@ -547,13 +615,26 @@ public static class PlayerCommandModule
 
 	[Command("god-mode", "Makes a player invulnerable")]
 	[Alias(new string[] { "godmodeon" })]
-	private static void GodMode(PlayerList players, bool isOn)
+	private static void GodMode(PlayerList players, bool isOn = true)
 	{
 		foreach (Player player in players)
 		{
-			if (player.PlayerController != null)
+			if (player?.PlayerController != null)
 			{
 				player.PlayerController.IsIgnoringDamage = isOn;
+			}
+		}
+	}
+
+	[Command("god-mode-toggle", "Flips a players invulnerability on or off")]
+	[Alias(new string[] { "godmodetoggle" })]
+	private static void GodModeToggle(PlayerList players)
+	{
+		foreach (Player player in players)
+		{
+			if (player?.PlayerController != null)
+			{
+				player.PlayerController.IsIgnoringDamage = !player.PlayerController.IsIgnoringDamage;
 			}
 		}
 	}
@@ -562,25 +643,45 @@ public static class PlayerCommandModule
 	[Alias(new string[] { "tp" })]
 	public static void Teleport(PlayerList players, SpawnAreaIdentifier target = SpawnAreaIdentifier.RespawnPoint)
 	{
+		SpawnArea spawnArea = null;
+		if (target != SpawnAreaIdentifier.Home && !SpawnArea.InstanceMap.TryGetValue(target, out spawnArea))
+		{
+			CommandService.ThrowError("No spawn area is loaded for {0}", target);
+		}
 		foreach (Player player in players)
 		{
-			PlayerEffectController component = player.PlayerController.GetComponent<PlayerEffectController>();
-			Vector3 position = ((target != SpawnAreaIdentifier.Home) ? SpawnArea.InstanceMap[target].GetRandomSpawnPosition() : player.GetSpawnPosition(true));
+			PlayerController controller = player?.PlayerController;
+			if (controller == null)
+			{
+				logger.Trace("Skipping a player with no live controller.");
+				continue;
+			}
+			PlayerEffectController component = controller.GetComponent<PlayerEffectController>();
+			Vector3 position = ((target != SpawnAreaIdentifier.Home) ? spawnArea.GetRandomSpawnPosition() : player.GetSpawnPosition(true));
 			if (component != null)
 			{
 				component.Teleport(position, 1f);
 			}
+			else if (controller.LocomotionController != null)
+			{
+				controller.LocomotionController.MoveTo(position, LocomotionFunction.Reposition);
+			}
 			else
 			{
-				player.PlayerController.LocomotionController.MoveTo(position, LocomotionFunction.Reposition);
+				logger.Trace("Skipping a player with no locomotion controller.");
+				continue;
 			}
-			logger.Debug("Teleported {0} to {1}", player.UserInfo.Username, target);
+			logger.Debug("Teleported {0} to {1}", player.UserInfo?.Username, target);
 		}
 	}
 
 	[Command("unlock-cancel", "Testing command while working on unlocks")]
 	private static void UnlockCancel(Player player)
 	{
+		if (player?.UnlockManager == null)
+		{
+			CommandService.ThrowError("That player has no unlock manager");
+		}
 		player.UnlockManager.CancelUnlock();
 	}
 
@@ -590,6 +691,7 @@ public static class PlayerCommandModule
 	{
 		foreach (Player player in players)
 		{
+			if (player?.UnlockManager == null) continue;
 			player.UnlockManager.SetPermanentUnlock(unlock, isUnlocked);
 			if (player.UnlockManager.CurrentUnlock == unlock)
 			{
@@ -601,12 +703,16 @@ public static class PlayerCommandModule
 	[Command("unlock-check", "Check Unlock")]
 	private static bool CheckStat(Player player, PlayerUnlock unlock)
 	{
-		return player.UnlockManager.Check(unlock);
+		return player?.UnlockManager != null && player.UnlockManager.Check(unlock);
 	}
 
 	[Command("get-home", "Gets a players respawn point")]
 	private static Vector3 GetHome(Player player)
 	{
+		if (player?.Save?.Data == null)
+		{
+			CommandService.ThrowError("The player has no save loaded yet.");
+		}
 		return player.Save.Data.home;
 	}
 
@@ -615,6 +721,11 @@ public static class PlayerCommandModule
 	{
 		foreach (Player player in players)
 		{
+			if (player?.Save?.Data == null)
+			{
+				logger.Trace("Skipping a player with no save loaded");
+				continue;
+			}
 			player.Save.Data.home = home;
 		}
 	}
@@ -625,7 +736,12 @@ public static class PlayerCommandModule
 	{
 		foreach (Player player in players)
 		{
-			Stat statOnPlayer = statDefinition.GetStatOnPlayer(player);
+			Stat statOnPlayer = (player != null) ? statDefinition.GetStatOnPlayer(player) : null;
+			if (statOnPlayer == null)
+			{
+				logger.Trace("Skipping a player with no '" + statDefinition.Name + "' stat.");
+				continue;
+			}
 			switch (applicationType)
 			{
 			case StatApplicationType.Base:
@@ -648,9 +764,15 @@ public static class PlayerCommandModule
 	{
 		foreach (Player player in players)
 		{
-			Stat statOnPlayer = statDefinition.GetStatOnPlayer(player);
+			PlayerController controller = player?.PlayerController;
+			Stat statOnPlayer = (controller != null) ? statDefinition.GetStatOnPlayer(player) : null;
+			if (statOnPlayer == null)
+			{
+				logger.Trace("Skipping a player with no '" + statDefinition.Name + "' stat.");
+				continue;
+			}
 			StatModifier modifier = new StatModifier(statOnPlayer, valueModifier, isMultiplier);
-			player.PlayerController.Health.StatManager.ApplyTimedModifier(modifier, duration);
+			controller.Health.StatManager.ApplyTimedModifier(modifier, duration);
 			logger.Trace(string.Concat(player, " ", statOnPlayer.Definition.Name, " is now modified, current value is ", statOnPlayer.Value));
 		}
 	}
