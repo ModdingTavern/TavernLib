@@ -86,6 +86,24 @@ public static class PlayerJoinFilter
 
             if (requestJoinMessage.PlayerMode is PlayerMode.Fly or PlayerMode.AutoCam or PlayerMode.Unassigned)
             {
+                // Check if user has the fly role before blocking
+                if (requestJoinMessage.PlayerMode is PlayerMode.Fly)
+                {
+                    using var tokenStream = stream.Clone() as Stream;
+                    var tokenMessage = new RequestJoinMessage();
+                    tokenMessage.Serialize(connection, tokenStream);
+                    var token = JWTUtility.CreateFromString(tokenMessage.UserCredentials, true);
+                    var username = token.Claims.FirstOrDefault(c => c.Type == "Username")?.Value ?? "";
+                    var users = TavernServices.GetService<TavernApiManager>().UserConfig.LastRead.Users;
+                    if (users.TryGetValue(username.ToLowerInvariant(), out var user) &&
+                        user.Roles != null &&
+                        (user.Roles.Contains("fly") || user.Roles.Contains("moderator") || user.Roles.Contains("owner")))
+                    {
+                        TavernLogger.Msg($"User {username} allowed fly mode via role");
+                        return true;
+                    }
+                }
+
                 TavernLogger.Warn($"User kicked for bizarre mode");
                 await ServerPlayerConnectionHandlerOld.PlayerDenied(connection, "Bizarre mode detected.");
                 return false;
@@ -100,7 +118,7 @@ public static class PlayerJoinFilter
 
         return true;
     }
-    
+
     [HarmonyPatch(typeof(ConfirmJoinMessage), MethodType.Constructor, [typeof(bool), typeof(bool), typeof(ClientJoinResult), typeof(JoinedServerInfo), typeof(string)]), HarmonyPostfix]
     public static void LogDisconnectAttempts(bool isAllowed, bool isDoingPrerequisites, ClientJoinResult joinResult, JoinedServerInfo serverInfo, string error, ref ConfirmJoinMessage __instance)
     {
