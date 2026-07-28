@@ -59,13 +59,12 @@ public static class PlayerJoinFilter
             var tavernToken = token.Claims.FirstOrDefault(claim => claim.Type == "TavernToken")?.Value;
             var id = ulong.Parse(token.Claims.FirstOrDefault(claim => claim.Type == "UserId")?.Value ?? "0");
             var username = token.Claims.FirstOrDefault(claim => claim.Type == "Username")?.Value ?? "";
-                
+
             var users = TavernServices.GetService<TavernApiManager>().UserConfig.LastRead.Users;
             if (users.TryGetValue(username.ToLowerInvariant(), out var user) && user.UserId == id && user.Token == tavernToken) return true;
-                
+
             await ServerPlayerConnectionHandlerOld.PlayerDenied(connection, "Data mismatch or account not found");
             return false;
-
         }
 
         catch (Exception e)
@@ -86,20 +85,19 @@ public static class PlayerJoinFilter
 
             if (requestJoinMessage.PlayerMode is PlayerMode.Fly or PlayerMode.AutoCam or PlayerMode.Unassigned)
             {
-                if (requestJoinMessage.PlayerMode is PlayerMode.Fly)
+                var token = JWTUtility.CreateFromString(requestJoinMessage.UserCredentials, true);
+                
+                var username = token.Claims.FirstOrDefault(c => c.Type == "Username")?.Value ?? "";
+                var users = TavernServices.GetService<TavernApiManager>().UserConfig.LastRead.Users;
+                
+                if (users.TryGetValue(username.ToLowerInvariant(), out var user) &&
+                    user.Roles != null &&
+                    user.Roles.Any(r => string.Equals(r, "fly", StringComparison.OrdinalIgnoreCase) ||
+                                        string.Equals(r, "owner", StringComparison.OrdinalIgnoreCase) ||
+                                        string.Equals(r, "moderator", StringComparison.OrdinalIgnoreCase)))
                 {
-                    var token = JWTUtility.CreateFromString(requestJoinMessage.UserCredentials, true);
-                    var username = token.Claims.FirstOrDefault(c => c.Type == "Username")?.Value ?? "";
-                    var users = TavernServices.GetService<TavernApiManager>().UserConfig.LastRead.Users;
-                    if (users.TryGetValue(username.ToLowerInvariant(), out var user) &&
-                        user.Roles != null &&
-                        user.Roles.Any(r => string.Equals(r, "fly", StringComparison.OrdinalIgnoreCase) ||
-                                            string.Equals(r, "owner", StringComparison.OrdinalIgnoreCase) ||
-                                            string.Equals(r, "moderator", StringComparison.OrdinalIgnoreCase)))
-                    {
-                        TavernLogger.Msg($"User {username} allowed fly mode via role");
-                        return true;
-                    }
+                    TavernLogger.Msg($"User {username} allowed unorthodox role via role");
+                    return true;
                 }
 
                 TavernLogger.Warn($"User kicked for bizarre mode");
