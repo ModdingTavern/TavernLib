@@ -20,6 +20,9 @@ using Alta.StatSystem;
 using Alta.Utilities;
 using ATT.PlayerStates;
 using NLog;
+using TavernLib.Backend.Api;
+using TavernLib.Backend.Server.Configs;
+using TavernLib.Services;
 using UnityEngine;
 using Inventory = Alta.Console.Commands.Inventory;
 
@@ -61,7 +64,7 @@ public static class PlayerCommandModule
 			string result = GetData((PlayerSave)altaFile.Content);
 			if (Player.GetPlayer(id) == null)
 			{
-				altaFile.QueueUnload();
+				await altaFile.QueueUnloadAsync();
 			}
 			return result;
 			string GetData(PlayerSave save)
@@ -99,7 +102,7 @@ public static class PlayerCommandModule
 			uint[] array = new uint[bytes.Length / 4];
 			Buffer.BlockCopy(bytes, 0, array, 0, bytes.Length);
 			(obj.Content as PlayerSave).PrefabData = array;
-			obj.QueueUnload();
+			await obj.QueueUnloadAsync();
 		}
 
 		[ServerOnly]
@@ -390,26 +393,26 @@ public static class PlayerCommandModule
 
 	[ServerOnly]
 	[Command("username", "Get the username from a user identifier")]
-	private static async Task<UserInfo> GetUsername(int userId)
+	private static UserInfo GetUsername(int userId)
 	{
-		UserInfo userInfo = await ApiAccess.ApiClient.UserClient.GetUserInfoAsync(userId);
-		if (userInfo == null)
-		{
-			CommandService.ThrowError("Couldnt find user with id: {0}", userId);
-		}
-		return userInfo;
+		var foundMatch = TavernServices.GetService<TavernApiManager>().UserConfig.LastRead.Users.Where(kvp => kvp.Value.UserId == (ulong)userId).ToList();
+		
+		if (!foundMatch.Any()) CommandService.ThrowError("Couldn't find user with id: {0}", userId);
+
+		var firstPlayer = foundMatch[0];
+		return new UserInfo((int)firstPlayer.Value.UserId, firstPlayer.Key);
 	}
 
 	[ServerOnly]
 	[Command("id", "Get the id from a username")]
-	private static async Task<UserInfo> GetIdentifier(string username)
+	private static UserInfo GetIdentifier(string username)
 	{
-		UserInfo userInfo = await ApiAccess.ApiClient.UserClient.GetUserInfoAsync(username);
-		if (userInfo == null)
-		{
-			CommandService.ThrowError("Couldnt find user with username: {0}", username);
-		}
-		return userInfo;
+		if (TavernServices.GetService<TavernApiManager>().UserConfig.LastRead.Users.TryGetValue(username.ToLower(), out var user))
+			return new UserInfo((int)user.UserId, username);
+		
+		
+		CommandService.ThrowError("Couldn't find user with username: {0}", username);
+		return null; // Stupid compiler problem, it doesn't know the function above throws :(
 	}
 
 	[ServerOnly]
