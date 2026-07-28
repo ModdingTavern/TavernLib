@@ -200,6 +200,7 @@
     <Compile Include="ModulePorts\DocumentModule.cs" />
     <Compile Include="ModulePorts\PlayerCommandModule.cs" />
     <Compile Include="Patches\CommandSecurityPatches.cs" />
+    <Compile Include="Patches\ConsoleEventsPatch.cs" />
     <Compile Include="Patches\PlayerLimitPatch.cs" />
     <Compile Include="Services\IService.cs" />
     <Compile Include="Patches\PlayerJoinFilter.cs" />

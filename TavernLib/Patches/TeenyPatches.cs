@@ -273,7 +273,7 @@ public class TeenyPatches
             using (var hmac = new HMACSHA256(secret))
                 expectedSig = hmac.ComputeHash(Encoding.UTF8.GetBytes(sigInput));
 
-            __result = Task.FromResult(string.Equals(sigClaim, B64Url(expectedSig), StringComparison.Ordinal));
+            __result = Task.FromResult(string.Equals(sigClaim.Trim(), B64Url(expectedSig), StringComparison.Ordinal));
         }
         catch
         {

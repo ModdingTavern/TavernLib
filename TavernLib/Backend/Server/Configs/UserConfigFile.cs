@@ -16,7 +16,7 @@ public class UserConfig
         [JsonProperty("user_id")] public ulong UserId { get; set; }
         [JsonProperty("token")] public string Token { get; set; }
         [JsonProperty("registered_from")] public string RegisteredFrom { get; set; }
-        [JsonProperty("roles")] public List<string> Roles { get; set; } = [];
+        [JsonProperty("roles")] public List<string> Roles { get; set; } = new();
 
         public bool HasRole(string role) =>
             Roles != null && Roles.Any(r => string.Equals(r, role, StringComparison.OrdinalIgnoreCase));
