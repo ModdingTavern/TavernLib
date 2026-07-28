@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Alta.Api.DataTransferModels.Extensions;
 using TavernLib.Backend.Api;
 using UnityEngine;
+using TavernLib.Backend;
 
 namespace TavernLib.Backend.Server;
 
@@ -16,8 +17,16 @@ public class ServerListingController
     public ServerListingController(TavernApiManager manager)
     {
         _manager = manager;
-            
-        _apiClient = new HttpClient
+
+        var handler = new HttpClientHandler();
+        var systemProxy = WindowsProxy.CreateSystemProxy();
+        if (systemProxy != null)
+        {
+            handler.Proxy = systemProxy;
+            handler.UseProxy = true;
+        }
+
+        _apiClient = new HttpClient(handler)
         {
             BaseAddress = new Uri(BackendUtils.TavernApi),
             Timeout = TimeSpan.FromSeconds(6)
