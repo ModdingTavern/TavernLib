@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using Alta.Api.DataTransferModels.Extensions;
 using TavernLib.Backend.Api;
 using UnityEngine;
-using TavernLib.Backend;
 
 namespace TavernLib.Backend.Server;
 

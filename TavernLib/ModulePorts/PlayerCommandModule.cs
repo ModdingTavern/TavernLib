@@ -21,7 +21,6 @@ using Alta.Utilities;
 using ATT.PlayerStates;
 using NLog;
 using TavernLib.Backend.Api;
-using TavernLib.Backend.Server.Configs;
 using TavernLib.Services;
 using UnityEngine;
 using Inventory = Alta.Console.Commands.Inventory;
