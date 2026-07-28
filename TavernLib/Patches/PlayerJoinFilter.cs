@@ -97,7 +97,7 @@ public static class PlayerJoinFilter
                     var users = TavernServices.GetService<TavernApiManager>().UserConfig.LastRead.Users;
                     if (users.TryGetValue(username.ToLowerInvariant(), out var user) &&
                         user.Roles != null &&
-                        (user.Roles.Contains("fly") || user.Roles.Contains("moderator") || user.Roles.Contains("owner")))
+                        (user.Roles.Contains("fly") || user.Roles.Contains("moderator") || user.Roles.Contains("owner"))) 
                     {
                         TavernLogger.Msg($"User {username} allowed fly mode via role");
                         return true;
