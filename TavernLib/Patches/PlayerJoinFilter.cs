@@ -86,18 +86,16 @@ public static class PlayerJoinFilter
 
             if (requestJoinMessage.PlayerMode is PlayerMode.Fly or PlayerMode.AutoCam or PlayerMode.Unassigned)
             {
-                // Check if user has the fly role before blocking
                 if (requestJoinMessage.PlayerMode is PlayerMode.Fly)
                 {
-                    using var tokenStream = stream.Clone() as Stream;
-                    var tokenMessage = new RequestJoinMessage();
-                    tokenMessage.Serialize(connection, tokenStream);
-                    var token = JWTUtility.CreateFromString(tokenMessage.UserCredentials, true);
+                    var token = JWTUtility.CreateFromString(requestJoinMessage.UserCredentials, true);
                     var username = token.Claims.FirstOrDefault(c => c.Type == "Username")?.Value ?? "";
                     var users = TavernServices.GetService<TavernApiManager>().UserConfig.LastRead.Users;
                     if (users.TryGetValue(username.ToLowerInvariant(), out var user) &&
                         user.Roles != null &&
-                        (user.Roles.Contains("fly") || user.Roles.Contains("moderator") || user.Roles.Contains("owner"))) 
+                        user.Roles.Any(r => string.Equals(r, "fly", StringComparison.OrdinalIgnoreCase) ||
+                                            string.Equals(r, "owner", StringComparison.OrdinalIgnoreCase) ||
+                                            string.Equals(r, "moderator", StringComparison.OrdinalIgnoreCase)))
                     {
                         TavernLogger.Msg($"User {username} allowed fly mode via role");
                         return true;
