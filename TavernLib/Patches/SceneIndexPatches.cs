@@ -3,11 +3,10 @@ using HarmonyLib;
 
 namespace TavernLib.Patches;
 
-
-
+[HarmonyPatch]
 public class SceneIndexPatches
 {
-    [HarmonyPatch(typeof(JoinedServerGameMode), MethodType.Constructor), HarmonyPostfix]
+    [HarmonyPatch(typeof(JoinedServerGameMode), MethodType.Constructor, [typeof(GameServerInfo)]), HarmonyPostfix]
     public static void OverrideSceneIndex(GameServerInfo server)
     {
         if (CommandLineArguments.Contains(TavernArgs.QuestScene))
