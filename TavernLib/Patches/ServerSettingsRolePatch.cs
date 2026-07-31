@@ -1,5 +1,6 @@
-﻿using Alta.QuickAccessActions;
+﻿using Alta.Networking;
 using HarmonyLib;
+using TavernLib.Backend;
 using TavernLib.Backend.Api;
 using TavernLib.Services;
 
@@ -8,10 +9,6 @@ namespace TavernLib.Patches;
 [HarmonyPatch]
 public class ServerSettingsRolePatch
 {
-    [HarmonyPatch(typeof(SettingsQuickAccessMenu), nameof(SettingsQuickAccessMenu.InitializeForPlayer)), HarmonyPostfix]
-    public static void ValidateUserPermissions(Player player, bool isDev, SettingsQuickAccessMenu __instance)
-    {
-        __instance.hasPermission = TavernServices.GetService<TavernApiManager>().UserConfig.GetUser(player.UserInfo.Username).IsModerator;
     // Send a user their roles, used to toggle the quick access server board, respective of their roles
     [HarmonyPatch(typeof(Player), nameof(Player.InitializePlayerOnServer)), HarmonyPostfix]
     public static void SendRolesToUser(Player __instance)
