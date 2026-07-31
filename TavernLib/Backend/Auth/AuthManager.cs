@@ -181,7 +181,7 @@ internal class AuthManager
 
         TavernLogger.Msg("Writing any potential changes during join to file");
         _manager.UserConfig.WriteToFile();
-        await WriteResponse(stream, new AuthPayloads.AuthenticateOk(userData.UserId));
+        await WriteResponse(stream, new AuthPayloads.AuthenticateOk(userData.UserId, _manager.ServerConfig.LastRead.QuestScene));
     }
 
     private async Task<bool> CheckIfPermitted(string joinerIp, AuthPayloads.AuthenticateRequest payload, Stream stream)
