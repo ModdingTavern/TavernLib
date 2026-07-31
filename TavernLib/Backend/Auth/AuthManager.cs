@@ -15,11 +15,11 @@ namespace TavernLib.Backend.Auth;
 
 internal class AuthManager
 {
-    private TavernApiManager _manager;
+    private TavernManager _manager;
     private TcpListener _listener;
 
 
-    public AuthManager(TavernApiManager manager)
+    public AuthManager(TavernManager manager)
     {
         _manager = manager;
         _listener = new(IPAddress.Any, 1762);

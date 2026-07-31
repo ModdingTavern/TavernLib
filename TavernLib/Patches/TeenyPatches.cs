@@ -367,6 +367,8 @@ public class TeenyPatches
     {
         if (__result is not DevGameServerInfo devInfo) return;
 
+        if (CommandLineArguments.Contains(TavernArgs.QuestScene)) __result.SceneIndex = 4;
+        
         int port = CommandLineArguments.TryGetNextArguments(TavernArgs.DevServerPort, 1, out var portArgs) && int.TryParse(portArgs[0], out var parsedPort)
             ? parsedPort
             : 1757;

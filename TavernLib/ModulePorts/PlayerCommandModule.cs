@@ -394,7 +394,7 @@ public static class PlayerCommandModule
 	[Command("username", "Get the username from a user identifier")]
 	private static UserInfo GetUsername(int userId)
 	{
-		var foundMatch = TavernServices.GetService<TavernApiManager>().UserConfig.LastRead.Users.Where(kvp => kvp.Value.UserId == (ulong)userId).ToList();
+		var foundMatch = TavernServices.GetService<TavernManager>().UserConfig.LastRead.Users.Where(kvp => kvp.Value.UserId == (ulong)userId).ToList();
 		
 		if (!foundMatch.Any()) CommandService.ThrowError("Couldn't find user with id: {0}", userId);
 
@@ -406,7 +406,7 @@ public static class PlayerCommandModule
 	[Command("id", "Get the id from a username")]
 	private static UserInfo GetIdentifier(string username)
 	{
-		if (TavernServices.GetService<TavernApiManager>().UserConfig.LastRead.Users.TryGetValue(username.ToLower(), out var user))
+		if (TavernServices.GetService<TavernManager>().UserConfig.LastRead.Users.TryGetValue(username.ToLower(), out var user))
 			return new UserInfo((int)user.UserId, username);
 		
 		

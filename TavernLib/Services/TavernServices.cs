@@ -23,7 +23,7 @@ public static class TavernServices
     {
         if (ServiceEntries.TryGetValue(typeof(T), out var result)) return result as T;
             
-        TavernLogger.Error($"Service of type {nameof(T)} was not found!");
+        TavernLogger.Error($"Service of type {typeof(T).Name} was not found!");
         return null;
     }
 }

@@ -10,10 +10,10 @@ namespace TavernLib.Backend.Server;
 public class ServerListingController
 {
     private readonly HttpClient _apiClient;
-    private TavernApiManager _manager;
+    private TavernManager _manager;
 
 
-    public ServerListingController(TavernApiManager manager)
+    public ServerListingController(TavernManager manager)
     {
         _manager = manager;
 
