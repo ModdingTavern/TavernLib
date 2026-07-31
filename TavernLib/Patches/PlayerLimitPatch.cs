@@ -11,6 +11,6 @@ public class PlayerLimitPatch
     [HarmonyPatch(typeof(ServerHandler), nameof(ServerHandler.PlayerLimit), MethodType.Getter), HarmonyPostfix]
     public static void SetPlayerLimit(ref int __result)
     {
-        __result = TavernServices.GetService<TavernApiManager>().ServerConfig.LastRead?.MaxPlayers ?? 0;
+        __result = TavernServices.GetService<TavernManager>().ServerConfig.LastRead?.MaxPlayers ?? 0;
     }
 }

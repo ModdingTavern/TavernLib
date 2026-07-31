@@ -6,7 +6,7 @@ using TavernLib.Services;
 
 namespace TavernLib.Backend.Api;
 
-public class TavernApiManager : IService
+public class TavernManager : IService
 {
     internal AuthManager AuthManager { get; private set; }
     internal ServerListingController ListingController { get; private set; }
@@ -16,7 +16,7 @@ public class TavernApiManager : IService
     public TavernServerConfig TavernConfig { get; private set; }
         
         
-    public TavernApiManager()
+    public TavernManager()
     {
         TavernLogger.Msg("Creating configs");
         UserConfig = new UserConfigFile(Path.Combine(TavernDirectories.ModdingTavern, TavernDirectories.Users));

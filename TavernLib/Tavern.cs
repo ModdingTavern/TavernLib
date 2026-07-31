@@ -1,9 +1,9 @@
 using System;
-using System.IO;
 using System.Reflection;
 using Alta.Console.Commands;
 using MelonLoader;
 using MonoMod.RuntimeDetour;
+using TavernLib.Backend;
 using TavernLib.Backend.Api;
 using TavernLib.Debugging;
 using TavernLib.Patches;
@@ -48,16 +48,20 @@ public class Tavern : MelonPlugin
     {
         try
         {
+            // Converts Alta's Real Logs Into MelonLoader Logs
             if (CommandLineArguments.Contains("/debug_helper")) TavernServices.AddService(new DebugHelper());
 
+            // Server Only Services
             if (CommandLineArguments.Contains(CommandLineArguments.StartServerArgument))
             {
                 TavernLogger.Msg("Booting TavernLib in server mode");
-                if (!CommandLineArguments.Contains(TavernArgs.DontManageAuth))
-                    TavernLib.Patches.TeenyPatches.EnsureConsoleToken();
-                TavernServices.AddService(new TavernApiManager());
+                if (!CommandLineArguments.Contains(TavernArgs.DontManageAuth)) TeenyPatches.EnsureConsoleToken();
+                
+                TavernServices.AddService(new TavernManager());
             }
-
+            
+            // Client & Server Services
+            TavernServices.AddService(new EntranceMessageHandler());
         }
         catch (Exception e)
         {

@@ -11,7 +11,7 @@
     <AssemblyName>TavernLib</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <LangVersion>12</LangVersion>
+    <LangVersion>14</LangVersion>
     <NuGetPackageImportStamp>
     </NuGetPackageImportStamp>
   </PropertyGroup>
@@ -185,7 +185,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Backend\Api\TavernApiManager.cs" />
+    <Compile Include="Backend\Api\TavernManager.cs" />
     <Compile Include="Backend\Auth\AuthManager.cs" />
     <Compile Include="Backend\Auth\AuthPayloads.cs" />
     <Compile Include="Backend\Server\Configs\ServerConfigFile.cs" />
@@ -195,6 +195,8 @@
     <Compile Include="Backend\Server\ServerListingController.cs" />
     <Compile Include="Backend\Server\ServerListingPayload.cs" />
     <Compile Include="Backend\BackendUtils.cs" />
+    <Compile Include="Backend\TavernMessages.cs" />
+    <Compile Include="Backend\EntranceMessageHandler.cs" />
     <Compile Include="Backend\WindowsProxy.cs" />
     <Compile Include="ModdingApi\TavernModAttribute.cs" />
     <Compile Include="ModulePorts\ChunkCommandModule.cs" />
@@ -202,9 +204,14 @@
     <Compile Include="ModulePorts\PlayerCommandModule.cs" />
     <Compile Include="Patches\CommandSecurityPatches.cs" />
     <Compile Include="Patches\ConsoleEventsPatch.cs" />
+    <Compile Include="Patches\EventPatches.cs" />
+    <Compile Include="Patches\MessageExpanderPatch.cs" />
+    <Compile Include="Patches\SceneIndexPatches.cs" />
     <Compile Include="Patches\PlayerLimitPatch.cs" />
+    <Compile Include="Patches\ServerSettingsRolePatch.cs" />
     <Compile Include="Services\IService.cs" />
     <Compile Include="Patches\PlayerJoinFilter.cs" />
+    <Compile Include="Services\TavernMessageHandler.cs" />
     <Compile Include="TavernArgs.cs" />
     <Compile Include="Debugging\DebugHelper.cs" />
     <Compile Include="Debugging\NLogCatcher.cs" />
@@ -216,6 +223,7 @@
     <Compile Include="TavernDirectories.cs" />
     <Compile Include="TavernLogger.cs" />
     <Compile Include="Patches\SelectFixPatch.cs" />
+    <Compile Include="Utils\TavernEvents.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
