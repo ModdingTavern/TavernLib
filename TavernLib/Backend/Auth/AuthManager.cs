@@ -93,6 +93,7 @@ internal class AuthManager
             var jsonPayload = JObject.Parse(payload);
 
             if (jsonPayload.ContainsKey("ping")) await WritePongResponse(stream);
+            else if (jsonPayload.ContainsKey("register_whitelist_application")) await ManageWhitelistApplicationRequest(stream, jsonPayload, client);
             else if (jsonPayload.ContainsKey("username")) await ManageAuthRequest(stream, jsonPayload, client);
             else
             {
@@ -247,6 +248,52 @@ internal class AuthManager
 
         TavernLogger.Msg($"Joining user at {joinerIp} passed all authentication checks");
         return true;
+    }
+
+    private async Task ManageWhitelistApplicationRequest(Stream stream, JObject payload, TcpClient joiner)
+    {
+        if (CommandLineArguments.Contains(TavernArgs.DontManageAuth))
+        {
+            TavernLogger.Msg("Ignoring whitelist application -- TavernLauncher is managing auth for this instance.");
+            return;
+        }
+
+        try
+        {
+            var username = payload.Value<string>("username");
+            if (string.IsNullOrWhiteSpace(username))
+            {
+                await WriteResponse(stream, new AuthPayloads.GenericFail("Missing username"));
+                return;
+            }
+
+            var joinerIp = ((IPEndPoint)joiner.Client.RemoteEndPoint).Address.ToString();
+            TavernLogger.Msg($"Whitelist application from {username} at {joinerIp}");
+
+            _manager.WhitelistRequests.ReadFromFile(); // pick up anything the owner's panel already cleared
+            var requests = _manager.WhitelistRequests.LastRead.Requests;
+
+            var alreadyPending = requests.Exists(r =>
+                string.Equals(r.Username, username, StringComparison.OrdinalIgnoreCase) && r.Ip == joinerIp);
+
+            if (!alreadyPending)
+            {
+                requests.Add(new WhitelistRequestList.WhitelistRequest
+                {
+                    Username = username,
+                    Ip = joinerIp,
+                    AppliedAt = DateTime.UtcNow.ToString("o"),
+                });
+                _manager.WhitelistRequests.WriteToFile();
+            }
+
+            await WriteResponse(stream, new AuthPayloads.WhitelistApplicationReceived(!alreadyPending));
+        }
+        catch (Exception e)
+        {
+            TavernLogger.Error($"Error managing whitelist application {e}");
+            await WriteResponse(stream, new AuthPayloads.GenericFail("Error processing application"));
+        }
     }
 
     private async Task WriteResponse(Stream stream, object response)
