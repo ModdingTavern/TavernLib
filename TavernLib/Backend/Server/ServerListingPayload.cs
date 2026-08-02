@@ -15,6 +15,7 @@ public struct ServerListingPayload
     [JsonProperty(PropertyName = "community_listed")] public bool CommunityListed { get; private set; }
     [JsonProperty(PropertyName = "hostname")] public string HostName { get; private set; }
     [JsonProperty(PropertyName = "version")] public string Version { get; private set; }
+    [JsonProperty(PropertyName = "region")] public string Region { get; private set; }
 
     public static ServerListingPayload FromConfig(ServerSettingsConfig config, TavernServerConfig tavernConfig)
     {
@@ -28,7 +29,8 @@ public struct ServerListingPayload
             PlayerCount = ServerHandler.Current?.Connections ?? 0,
             CommunityListed = config.LastRead.CommunityListed,
             HostName = config.LastRead.PublicHostname,
-            Version = Tavern.Version
+            Version = Tavern.Version,
+            Region = config.LastRead.Region
         };
     }
 }
