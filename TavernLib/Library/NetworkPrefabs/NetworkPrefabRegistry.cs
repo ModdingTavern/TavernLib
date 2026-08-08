@@ -188,7 +188,7 @@ namespace TavernLib.Library.NetworkPrefabs {
 
         public static Dictionary<Item, ItemSettings> RegisteredCustomItems = new Dictionary<Item, ItemSettings>();
 
-        public static Action OnItemsFinishedRegistering;
+        public static event Action OnItemsFinishedRegistering;
 
         internal static HashRegistryFile Registry { get; set; }
 
