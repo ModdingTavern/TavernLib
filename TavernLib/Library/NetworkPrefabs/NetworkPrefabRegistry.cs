@@ -18,59 +18,6 @@ using UnityEngine;
 using static TavernLib.Library.NetworkPrefabs.Enums;
 
 namespace TavernLib.Library.NetworkPrefabs {
-    internal class HC_Json : IAltaFileFormat/*, IAutoSave*/ {
-        /// <summary>
-        /// string = IpAddress
-        /// 
-        /// <br></br>
-        /// 
-        /// int = playerId
-        /// </summary>
-        internal Dictionary<string, int> deadPlayerIds = new Dictionary<string, int>();
-
-        //public HC_Json() {
-        //    StreamerManager.AutoSavingBehaviours.Add(this);
-        //}
-
-        //public void AutoSave() {
-        //    HardcoreManager.Save();
-        //}
-
-        public override IAltaFileFormat Clone() {
-            HC_Json clone = new HC_Json();
-
-            clone.deadPlayerIds = new Dictionary<string, int>(deadPlayerIds);
-
-            return clone;
-        }
-
-        public override void ReadFrom(FileInfo info, Stream stream) {
-            using BinaryReader reader = new BinaryReader(stream);
-
-            int arrayCount = reader.ReadInt32();
-
-            deadPlayerIds.Clear();
-
-            for (int i = 0; i < arrayCount; i++) {
-                string IpAddress = reader.ReadString();
-                int playerId = reader.ReadInt32();
-
-                deadPlayerIds.Add(IpAddress, playerId);
-            }
-        }
-
-        public override void WriteTo(Stream stream, CancellationToken token) {
-            using BinaryWriter writer = new BinaryWriter(stream);
-
-            writer.Write(deadPlayerIds.Count);
-
-            foreach (var pair in deadPlayerIds) {
-                writer.Write(pair.Key);
-                writer.Write(pair.Value);
-            }
-        }
-    }
-
     public class ItemSettings {
         public string Description;
 
