@@ -13,6 +13,7 @@ public class ServerSettings
     [JsonProperty(PropertyName = "community_listing_token")] public string CommunityListingToken { get; internal set; } = "";
     [JsonProperty(PropertyName = "public_hostname")] public string PublicHostname { get; private set; }
     [JsonProperty(PropertyName = "quest_scene")] public bool QuestScene { get; private set; }
+    [JsonProperty(PropertyName = "region")] public string Region { get; private set; } = "unknown";
 }
 
 public class ServerSettingsConfig(string filePath) : ServerConfigFile<ServerSettings>(filePath)
