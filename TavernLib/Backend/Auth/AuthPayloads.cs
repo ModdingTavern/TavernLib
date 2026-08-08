@@ -8,8 +8,8 @@ internal static class AuthPayloads
     {
         [JsonProperty(PropertyName = "ping")] private bool Ping { get; set; }
     }
-        
-        
+
+
     public struct PingResponse(string serverName, bool passwordRequired, bool whitelistEnabled, int gamePort)
     {
         [JsonProperty(PropertyName = "status")] private string Pong => "pong";
@@ -40,22 +40,29 @@ internal static class AuthPayloads
     {
         [JsonProperty(PropertyName = "status")] private string Status => "needs_password";
     }
-        
-        
+
+
     public readonly struct WrongPassword
     {
         [JsonProperty(PropertyName = "status")] private string Status => "wrong_password";
         [JsonProperty(PropertyName = "message")] private string Message => "Wrong Password";
     }
-        
-        
+
+
     public readonly struct NotWhitelisted
     {
         [JsonProperty(PropertyName = "status")] private string Status => "not_whitelisted";
         [JsonProperty(PropertyName = "message")] private string Message => "Not Whitelisted";
     }
-        
-        
+
+
+    public readonly struct WhitelistApplicationReceived(bool wasNew)
+    {
+        [JsonProperty(PropertyName = "status")] private string Status => "whitelist_application_received";
+        [JsonProperty(PropertyName = "already_pending")] private bool AlreadyPending => !wasNew;
+    }
+
+
     public readonly struct GenericFail(string message)
     {
         [JsonProperty(PropertyName = "status")] private string Status => "error";

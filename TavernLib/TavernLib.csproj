@@ -224,6 +224,7 @@
     <Compile Include="TavernLogger.cs" />
     <Compile Include="Patches\SelectFixPatch.cs" />
     <Compile Include="Utils\TavernEvents.cs" />
+    <Compile Include="WhitelistRequestsConfigFile.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
