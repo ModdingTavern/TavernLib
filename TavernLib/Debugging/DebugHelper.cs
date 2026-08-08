@@ -3,25 +3,24 @@ using MelonLoader;
 using TavernLib.Services;
 using UnityEngine;
 
-namespace TavernLib.Debugging
+namespace TavernLib.Debugging;
+
+public class DebugHelper : IService
 {
-    public class DebugHelper : IService
-    {
-        private readonly NLogCatcher _logCatcher = new();
+    private readonly NLogCatcher _logCatcher = new();
 
         
-        internal DebugHelper()
-        {
-            MelonEvents.OnGUI.Subscribe(OnGui);
-        }
+    internal DebugHelper()
+    {
+        MelonEvents.OnGUI.Subscribe(OnGui);
+    }
 
-        private void OnGui()
+    private void OnGui()
+    {
+        for (int i = 0; i < _logCatcher.Target.LoggingLevels.Count; i++)
         {
-            for (int i = 0; i < _logCatcher.Target.LoggingLevels.Count; i++)
-            {
-                var pair = _logCatcher.Target.LoggingLevels.ElementAt(i);
-                _logCatcher.Target.LoggingLevels[pair.Key] = GUILayout.Toggle(pair.Value, pair.Key);
-            }
+            var pair = _logCatcher.Target.LoggingLevels.ElementAt(i);
+            _logCatcher.Target.LoggingLevels[pair.Key] = GUILayout.Toggle(pair.Value, pair.Key);
         }
     }
 }

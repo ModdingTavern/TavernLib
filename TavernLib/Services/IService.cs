@@ -1,7 +1,6 @@
-﻿namespace TavernLib.Services
+﻿namespace TavernLib.Services;
+
+public interface IService
 {
-    public interface IService
-    {
         
-    }
 }
