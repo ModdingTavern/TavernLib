@@ -6,6 +6,7 @@ using MonoMod.RuntimeDetour;
 using TavernLib.Backend;
 using TavernLib.Backend.Api;
 using TavernLib.Debugging;
+using TavernLib.Library.NetworkPrefabs;
 using TavernLib.Patches;
 using TavernLib.Services;
 
@@ -32,6 +33,8 @@ public class Tavern : MelonPlugin
 
     public override void OnLateInitializeMelon()
     {
+        NetworkPrefabManager.ReadHashIDsFile();
+
         SetupSelectionFixPatch();
     }
 

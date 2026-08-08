@@ -11,7 +11,7 @@
     <AssemblyName>TavernLib</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <LangVersion>14</LangVersion>
+    <LangVersion>12</LangVersion>
     <NuGetPackageImportStamp>
     </NuGetPackageImportStamp>
   </PropertyGroup>
@@ -48,6 +48,10 @@
     </Reference>
     <Reference Include="Alta.Api.DataTransferModels">
       <HintPath>..\Dependencies\Alta.Api.DataTransferModels.dll</HintPath>
+    </Reference>
+    <Reference Include="Alta.Attributes, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Dependencies\Alta.Attributes.dll</HintPath>
     </Reference>
     <Reference Include="Alta.Authentication">
       <HintPath>..\Dependencies\Alta.Authentication.dll</HintPath>
@@ -198,6 +202,9 @@
     <Compile Include="Backend\TavernMessages.cs" />
     <Compile Include="Backend\EntranceMessageHandler.cs" />
     <Compile Include="Backend\WindowsProxy.cs" />
+    <Compile Include="Library\NetworkPrefabs\Enums.cs" />
+    <Compile Include="Library\NetworkPrefabs\NetworkPrefabManager.cs" />
+    <Compile Include="Library\NetworkPrefabs\NetworkPrefabRegistry.cs" />
     <Compile Include="ModdingApi\TavernModAttribute.cs" />
     <Compile Include="ModulePorts\ChunkCommandModule.cs" />
     <Compile Include="ModulePorts\DocumentModule.cs" />
@@ -206,6 +213,7 @@
     <Compile Include="Patches\ConsoleEventsPatch.cs" />
     <Compile Include="Patches\EventPatches.cs" />
     <Compile Include="Patches\MessageExpanderPatch.cs" />
+    <Compile Include="Patches\NetworkPrefabPatches.cs" />
     <Compile Include="Patches\SceneIndexPatches.cs" />
     <Compile Include="Patches\PlayerLimitPatch.cs" />
     <Compile Include="Patches\ServerSettingsRolePatch.cs" />
@@ -229,6 +237,9 @@
   <ItemGroup>
     <None Include="App.config" />
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Library\NetworkPrefabs\ExistingHashIDs.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\packages\System.ValueTuple.4.6.1\build\net471\System.ValueTuple.targets" Condition="Exists('..\packages\System.ValueTuple.4.6.1\build\net471\System.ValueTuple.targets')" />
