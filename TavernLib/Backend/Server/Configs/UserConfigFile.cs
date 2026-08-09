@@ -35,8 +35,10 @@ public class UserConfig
 
 public class UserConfigFile(string filePath) : ServerConfigFile<UserConfig>(filePath)
 {
-    public UserConfig.User GetUser(string username) => LastRead.Users[username.ToLowerInvariant()];
-    public UserConfig.User GetUser(int identifier) => LastRead.Users.First(user => user.Value.UserId == (ulong)identifier).Value;
+    public UserConfig.User GetUser(string username) =>
+        LastRead.Users.TryGetValue(username.ToLowerInvariant(), out var user) ? user : null;
+    public UserConfig.User GetUser(int identifier) =>
+        LastRead.Users.Values.FirstOrDefault(user => user.UserId == (ulong)identifier);
 
     public bool TryGetUser(string username, out UserConfig.User user)
     {
