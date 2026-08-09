@@ -16,7 +16,7 @@ namespace TavernLib;
 public class Tavern : MelonPlugin
 {
     internal static MelonLogger.Instance Logger { get; private set; }
-    public const string Version = "v1.4.2";
+    public const string Version = "1.5.0";
 
 
     public override void OnEarlyInitializeMelon()
