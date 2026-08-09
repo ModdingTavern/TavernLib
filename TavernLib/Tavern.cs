@@ -10,13 +10,13 @@ using TavernLib.Patches;
 using TavernLib.Services;
 
 
-[assembly: MelonInfo(typeof(TavernLib.Tavern), "TavernLib", "v1.4.2", "Tavern Team", "https://github.com/ModdingTavern/TavernLib")]
+[assembly: MelonInfo(typeof(TavernLib.Tavern), "TavernLib", "1.5.1", "Tavern Team", "https://github.com/ModdingTavern/TavernLib")]
 namespace TavernLib;
 
 public class Tavern : MelonPlugin
 {
     internal static MelonLogger.Instance Logger { get; private set; }
-    public const string Version = "1.5.0";
+    public const string Version = "1.5.1";
 
 
     public override void OnEarlyInitializeMelon()
