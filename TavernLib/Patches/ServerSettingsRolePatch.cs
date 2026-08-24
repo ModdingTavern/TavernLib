@@ -1,4 +1,5 @@
-﻿using Alta.Networking;
+﻿using System.Collections.Generic;
+using Alta.Networking;
 using HarmonyLib;
 using TavernLib.Backend;
 using TavernLib.Backend.Api;
@@ -13,7 +14,8 @@ public class ServerSettingsRolePatch
     [HarmonyPatch(typeof(Player), nameof(Player.InitializePlayerOnServer)), HarmonyPostfix]
     public static void SendRolesToUser(Player __instance)
     {
-        var roles = TavernServices.GetService<TavernManager>().UserConfig.GetUser(__instance.UserInfo.Username).Roles;
+        var user = TavernServices.GetService<TavernManager>().UserConfig.GetUser(__instance.UserInfo.Username);
+        var roles = user?.Roles ?? new List<string>();
         
         __instance.ConnectionToRemotePlayer.Send(null, (MessageType)TavernMessages.ReceiveRoles, (_, stream) =>
         {
