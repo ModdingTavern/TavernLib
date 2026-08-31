@@ -46,21 +46,31 @@ public class Tavern : MelonPlugin
         _ = new Hook(findObjectsMethod, selectionFixMethod);
     }
 
+    private bool _didInitialLogArchive;
+
     private void StartLogArchiveTimer()
     {
         _logArchiveTimer = new System.Threading.Timer(_ =>
         {
             try
             {
-                if (LogArchiver.ShouldAutoArchive()) LogArchiver.ArchiveLogNow();
+                if (!_didInitialLogArchive)
+                {
+                    _didInitialLogArchive = true;
+                    LogArchiver.ArchiveLogNow();
+                }
+                else if (LogArchiver.ShouldAutoArchive())
+                {
+                    LogArchiver.ArchiveLogNow();
+                }
             }
             catch (Exception e)
             {
-                TavernLogger.Error($"Auto log archive check failed: {e}");
+                TavernLogger.Error($"Log archive check failed: {e}");
             }
-        }, null, TimeSpan.FromSeconds(60), TimeSpan.FromSeconds(60));
+        }, null, TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(60));
     }
-    
+
     private void SetupServices()
     {
         try
@@ -74,8 +84,7 @@ public class Tavern : MelonPlugin
                 TavernLogger.Msg("Booting TavernLib in server mode");
                 if (!CommandLineArguments.Contains(TavernArgs.DontManageAuth)) TeenyPatches.EnsureConsoleToken();
 
-                LogArchiver.ArchiveLogNow();
-                StartLogArchiveTimer();
+                if (!CommandLineArguments.Contains(TavernArgs.DontManageAuth)) StartLogArchiveTimer();
 
                 TavernServices.AddService(new TavernManager());
             }
