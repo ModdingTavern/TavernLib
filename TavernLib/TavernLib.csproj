@@ -198,6 +198,7 @@
     <Compile Include="Backend\TavernMessages.cs" />
     <Compile Include="Backend\EntranceMessageHandler.cs" />
     <Compile Include="Backend\WindowsProxy.cs" />
+    <Compile Include="Debugging\LogArchiver.cs" />
     <Compile Include="ModdingApi\TavernModAttribute.cs" />
     <Compile Include="ModulePorts\ChunkCommandModule.cs" />
     <Compile Include="ModulePorts\DocumentModule.cs" />
@@ -205,6 +206,7 @@
     <Compile Include="Patches\CommandSecurityPatches.cs" />
     <Compile Include="Patches\ConsoleEventsPatch.cs" />
     <Compile Include="Patches\EventPatches.cs" />
+    <Compile Include="Patches\GarbageCollectionInterval.cs" />
     <Compile Include="Patches\MessageExpanderPatch.cs" />
     <Compile Include="Patches\SceneIndexPatches.cs" />
     <Compile Include="Patches\PlayerLimitPatch.cs" />
