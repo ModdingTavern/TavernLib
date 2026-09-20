@@ -14,6 +14,7 @@ public class ServerSettings
     [JsonProperty(PropertyName = "public_hostname")] public string PublicHostname { get; private set; }
     [JsonProperty(PropertyName = "quest_scene")] public bool QuestScene { get; private set; }
     [JsonProperty(PropertyName = "region")] public string Region { get; private set; } = "unknown";
+    [JsonProperty(PropertyName = "garbage_collection_timer")] public float GarbageCollectionTimer { get; private set; } = 30f;
 }
 
 public class ServerSettingsConfig(string filePath) : ServerConfigFile<ServerSettings>(filePath)

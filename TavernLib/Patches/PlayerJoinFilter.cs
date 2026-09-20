@@ -63,7 +63,7 @@ public static class PlayerJoinFilter
             var userConfig = TavernServices.GetService<TavernManager>().UserConfig;
             userConfig.ReadFromFile();
             var users = userConfig.LastRead.Users;
-            if (users.TryGetValue(username.ToLowerInvariant(), out var user) && user.UserId == id && user.Token == tavernToken) return true;
+            if (users.TryGetValue(username.ToLowerInvariant(), out var user) && user.UserId == id && !string.IsNullOrEmpty(user.Token) && user.Token == tavernToken) return true;
 
             await ServerPlayerConnectionHandlerOld.PlayerDenied(connection, "Data mismatch or account not found");
             return false;

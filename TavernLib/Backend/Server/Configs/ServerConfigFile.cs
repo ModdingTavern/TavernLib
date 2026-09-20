@@ -26,7 +26,7 @@ public abstract class ServerConfigFile<T>(string filePath) where T : class, new(
 
             var config = File.ReadAllText(FilePath);
             var result = JsonConvert.DeserializeObject<T>(config);
-            LastRead = result;
+            LastRead = result ?? new T();
         }
         catch (Exception e)
         {
