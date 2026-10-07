@@ -7,4 +7,5 @@ public static class TavernArgs
     public const string DevServerIp = "/dev_server_ip";
     public const string DevServerPort = "/dev_server_port";
     public const string QuestScene = "/questScene";
+    public const string TutorialScene = "/tutorialScene";
 }
