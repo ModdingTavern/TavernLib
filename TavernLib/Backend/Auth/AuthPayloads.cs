@@ -28,11 +28,13 @@ internal static class AuthPayloads
     }
 
 
-    public readonly struct AuthenticateOk(ulong userId, bool questSceneRequired)
+
+    public readonly struct AuthenticateOk(ulong userId, bool questSceneRequired, bool tutorialSceneRequired)
     {
         [JsonProperty(PropertyName = "status")] private string Status => "ok";
         [JsonProperty(PropertyName = "user_id")] private ulong UserId => userId;
         [JsonProperty(PropertyName = "quest_scene_required")] private bool QuestSceneRequired => questSceneRequired;
+        [JsonProperty(PropertyName = "tutorial_scene_required")] private bool TutorialSceneRequired => tutorialSceneRequired;
     }
 
 
