@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using Alta.Api.DataTransferModels.Converters;
@@ -41,7 +42,6 @@ public static class PlayerJoinFilter
         {
             TavernLogger.Error($"Error when filtering join request! {e}");
             await ServerPlayerConnectionHandlerOld.PlayerDenied(connection, "Error when checking authenticity");
-            throw;
         }
     }
 
@@ -55,15 +55,19 @@ public static class PlayerJoinFilter
 
             TavernLogger.Msg($"User trying to join with JWT {requestJoinMessage.UserCredentials}");
 
-            var token = JWTUtility.CreateFromString(requestJoinMessage.UserCredentials, true);
-            var tavernToken = token.Claims.FirstOrDefault(claim => claim.Type == "TavernToken")?.Value;
-            var id = ulong.Parse(token.Claims.FirstOrDefault(claim => claim.Type == "UserId")?.Value ?? "0");
-            var username = token.Claims.FirstOrDefault(claim => claim.Type == "Username")?.Value ?? "";
+            var claims = JWTUtility.CreateFromString(requestJoinMessage.UserCredentials, true).Claims.ToList();
+            var tavernTokens = claims.Where(claim => claim.Type == "TavernToken").ToList();
+            var ids = claims.Where(claim => claim.Type == "UserId").ToList();
+            var names = claims.Where(claim => claim.Type == "Username").ToList();
 
-            var userConfig = TavernServices.GetService<TavernManager>().UserConfig;
-            userConfig.ReadFromFile();
-            var users = userConfig.LastRead.Users;
-            if (users.TryGetValue(username.ToLowerInvariant(), out var user) && user.UserId == id && !string.IsNullOrEmpty(user.Token) && user.Token == tavernToken) return true;
+            if (tavernTokens.Count == 1 && ids.Count == 1 && names.Count == 1 &&
+                ulong.TryParse(ids[0].Value, NumberStyles.None, CultureInfo.InvariantCulture, out var id))
+            {
+                var userConfig = TavernServices.GetService<TavernManager>().UserConfig;
+                userConfig.ReadFromFile();
+                var users = userConfig.LastRead.Users;
+                if (users.TryGetValue(names[0].Value.ToLowerInvariant(), out var user) && user.UserId == id && !string.IsNullOrEmpty(user.Token) && user.Token == tavernTokens[0].Value) return true;
+            }
 
             await ServerPlayerConnectionHandlerOld.PlayerDenied(connection, "Data mismatch or account not found");
             return false;
@@ -72,7 +76,8 @@ public static class PlayerJoinFilter
         catch (Exception e)
         {
             TavernLogger.Error($"Error in FilterInvalidTokens! {e}");
-            throw;
+            await ServerPlayerConnectionHandlerOld.PlayerDenied(connection, "Error when checking authenticity");
+            return false;
         }
     }
 

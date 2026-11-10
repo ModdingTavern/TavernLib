@@ -10,6 +10,7 @@ using Alta.QuickAccessActions;
 using HarmonyLib;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IdentityModel.Tokens.Jwt;
 using System.IO;
 using System.Linq;
@@ -18,6 +19,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using TavernLib.ModdingApi;
 
 namespace TavernLib.Patches;
 
@@ -288,27 +290,50 @@ public class TeenyPatches
     #region ServerPlayerConnectionHandlerOld
 
     [HarmonyPatch(typeof(ServerPlayerConnectionHandlerOld), nameof(ServerPlayerConnectionHandlerOld.CheckIfPlayerIsAllowedCustom)), HarmonyPrefix]
-    public static bool ValidateConsoleToken(string tokenString, int playerId, ref Task<ServerPlayerConnectionHandlerOld.PlayerJoinResult> __result)
+    public static bool CheckJoinToken(string tokenString, int playerId, ref Task<ServerPlayerConnectionHandlerOld.PlayerJoinResult> __result)
+    {
+        __result = Task.FromResult(JoinResult(tokenString, playerId));
+        return false;
+    }
+
+    private static ServerPlayerConnectionHandlerOld.PlayerJoinResult JoinResult(string tokenString, int playerId)
     {
         try
         {
-            var jwtToken = JWTUtility.CreateFromString(tokenString);
-            var value = jwtToken.Claims.First(c => c.Type == "Username").Value;
+            var claims = JWTUtility.CreateFromString(tokenString).Claims.ToList();
+            var ids = claims.Where(c => c.Type == "UserId").ToList();
+            var names = claims.Where(c => c.Type == "Username").ToList();
 
-            if (int.Parse(jwtToken.Claims.First(c => c.Type == "UserId").Value) != playerId)
+            if (ids.Count != 1 || names.Count != 1)
+                return ServerPlayerConnectionHandlerOld.PlayerJoinResult.CreateDeniedResult("Error reading token");
+
+            if (!int.TryParse(ids[0].Value, NumberStyles.None, CultureInfo.InvariantCulture, out var tokenId) || tokenId != playerId)
             {
-                __result = Task.FromResult(ServerPlayerConnectionHandlerOld.PlayerJoinResult.CreateDeniedResult("Token was for a different user"));
+                TavernLogger.Warn($"Join denied: the token is for user {ids[0].Value}, the join asked for {playerId}");
+                return ServerPlayerConnectionHandlerOld.PlayerJoinResult.CreateDeniedResult("Token was for a different user");
             }
 
-            var result = new UserInfoAndRole(new UserInfo(playerId, value), UserRolesUtility.GetRolesFromIdentityToken(tokenString));
-            __result = Task.FromResult(ServerPlayerConnectionHandlerOld.PlayerJoinResult.CreateSuccessResult(result));
+            var username = names[0].Value;
+            var user = new UserInfoAndRole(new UserInfo(playerId, username), MemberStatusFromRoles(username));
+            return ServerPlayerConnectionHandlerOld.PlayerJoinResult.CreateSuccessResult(user);
         }
         catch (Exception)
         {
-            __result = Task.FromResult(ServerPlayerConnectionHandlerOld.PlayerJoinResult.CreateDeniedResult("Error reading token"));
+            return ServerPlayerConnectionHandlerOld.PlayerJoinResult.CreateDeniedResult("Error reading token");
         }
+    }
 
-        return false;
+    // The client writes its own join token, so its Policy claims prove nothing. The game's
+    // statuses come from users.json roles named like the claims the game reads.
+    internal static PlayerSubscriberStatus MemberStatusFromRoles(string username)
+    {
+        var roles = Roles.GetRoles(username);
+        bool Has(string role) => roles.Any(r => string.Equals(r, role, StringComparison.OrdinalIgnoreCase));
+
+        if (Has("dev")) return PlayerSubscriberStatus.Developer;
+        if (Has("mod")) return PlayerSubscriberStatus.AltaMod;
+        if (Has("supporter")) return PlayerSubscriberStatus.Subscriber;
+        return PlayerSubscriberStatus.None;
     }
 
     #endregion
