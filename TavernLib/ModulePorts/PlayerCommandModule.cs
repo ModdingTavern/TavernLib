@@ -21,6 +21,7 @@ using Alta.Utilities;
 using ATT.PlayerStates;
 using NLog;
 using TavernLib.Backend.Api;
+using TavernLib.Backend.Server.Configs;
 using TavernLib.Services;
 using UnityEngine;
 using Inventory = Alta.Console.Commands.Inventory;
@@ -429,6 +430,99 @@ public static class PlayerCommandModule
 		{
 			player.Kick(reason);
 		}
+	}
+
+	[ServerOnly]
+	[Command("ban", "Blacklists a name and its user id, then kicks anyone playing under that name")]
+	private static string Ban(string username, string reason = "Banned")
+	{
+		ulong? userId = null;
+		ChangeUsers(config =>
+		{
+			var blacklist = Lists(config.Blacklist ??= new UserConfig.ListConfig());
+			var changed = false;
+			if (!blacklist.Usernames.Any(name => string.Equals(name, username, StringComparison.OrdinalIgnoreCase)))
+			{
+				blacklist.Usernames.Add(username);
+				changed = true;
+			}
+			if (config.Users.TryGetValue(username.ToLowerInvariant(), out var user) && user != null)
+			{
+				userId = user.UserId;
+				if (!blacklist.UserIds.Contains(user.UserId))
+				{
+					blacklist.UserIds.Add(user.UserId);
+					changed = true;
+				}
+			}
+			return changed;
+		});
+
+		var kicked = 0;
+		foreach (Player player in Player.AllPlayers.ToList())
+		{
+			if (!string.Equals(player.ConnectionToRemotePlayer?.UserInfo?.Username, username, StringComparison.OrdinalIgnoreCase)) continue;
+			player.Kick(reason);
+			kicked++;
+		}
+
+		return $"Banned {username}" + (userId.HasValue ? $" (user id {userId})" : " (no account on this server yet)") + $", kicked {kicked}";
+	}
+
+	[ServerOnly]
+	[Command("unban", "Takes a name and its user id off the blacklist")]
+	private static string Unban(string username)
+	{
+		var removed = 0;
+		ChangeUsers(config =>
+		{
+			if (config.Blacklist == null) return false;
+			var blacklist = Lists(config.Blacklist);
+			removed += blacklist.Usernames.RemoveAll(name => string.Equals(name, username, StringComparison.OrdinalIgnoreCase));
+			if (config.Users.TryGetValue(username.ToLowerInvariant(), out var user) && user != null)
+				removed += blacklist.UserIds.RemoveAll(id => id == user.UserId);
+			return removed > 0;
+		});
+
+		return removed == 0 ? $"{username} was not on the blacklist" : $"Unbanned {username}";
+	}
+
+	[ServerOnly]
+	[Command("banlist", "Shows the blacklist")]
+	private static string BanList()
+	{
+		UserConfig config = null;
+		try
+		{
+			config = TavernServices.GetService<TavernManager>().UserConfig.Read();
+		}
+		catch (Exception)
+		{
+			CommandService.ThrowError("users.json can't be read");
+		}
+
+		var blacklist = Lists(config.Blacklist ?? new UserConfig.ListConfig());
+		return $"Names: {string.Join(", ", blacklist.Usernames)}\nUser ids: {string.Join(", ", blacklist.UserIds)}\nIPs: {string.Join(", ", blacklist.Ips)}";
+	}
+
+	private static void ChangeUsers(Func<UserConfig, bool> change)
+	{
+		try
+		{
+			TavernServices.GetService<TavernManager>().UserConfig.Update(change);
+		}
+		catch (Exception e) when (e is System.IO.IOException or System.IO.InvalidDataException or UnauthorizedAccessException or Newtonsoft.Json.JsonException)
+		{
+			CommandService.ThrowError("users.json can't be read or written, nothing changed");
+		}
+	}
+
+	private static UserConfig.ListConfig Lists(UserConfig.ListConfig list)
+	{
+		list.Usernames ??= new List<string>();
+		list.UserIds ??= new List<ulong>();
+		list.Ips ??= new List<string>();
+		return list;
 	}
 
 	[ServerOnly]

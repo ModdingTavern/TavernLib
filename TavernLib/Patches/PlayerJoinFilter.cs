@@ -1,14 +1,18 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Net;
+using System.Reflection;
 using System.Threading.Tasks;
 using Alta.Api.DataTransferModels.Converters;
 using Alta.Networking;
 using Alta.Networking.Servers;
+using Alta.NetworkingTransport.Kcp;
 using Alta.Serialization;
 using HarmonyLib;
-using Newtonsoft.Json;
 using TavernLib.Backend.Api;
+using TavernLib.Backend.Server.Configs;
 using TavernLib.Services;
 
 namespace TavernLib.Patches;
@@ -25,7 +29,7 @@ public static class PlayerJoinFilter
 
     private static async void FilterJoinRequest(Connection connection, Stream stream)
     {
-        TavernLogger.Msg($"Filtering join request for user at IP {connection.IpAddress}");
+        TavernLogger.Msg($"Filtering join request for user at IP {AddressOf(connection)}");
 
         try
         {
@@ -69,8 +73,17 @@ public static class PlayerJoinFilter
                     return false;
                 }
 
-                var users = TavernServices.GetService<TavernManager>().UserConfig.Read().Users;
-                if (users.TryGetValue(names[0].Value.ToLowerInvariant(), out var user) && user != null && user.UserId == id && !string.IsNullOrEmpty(user.Token) && user.Token == tavernTokens[0].Value) return true;
+                var config = TavernServices.GetService<TavernManager>().UserConfig.Read();
+                if (config.Users.TryGetValue(names[0].Value.ToLowerInvariant(), out var user) && user != null && user.UserId == id && !string.IsNullOrEmpty(user.Token) && user.Token == tavernTokens[0].Value)
+                {
+                    // 1762 checks these too, but a client can skip 1762 and come straight here.
+                    var refusal = Refusal(config, names[0].Value, user, AddressOf(connection));
+                    if (refusal == null) return true;
+
+                    TavernLogger.Msg($"Join denied for {names[0].Value}: {refusal}");
+                    await ServerPlayerConnectionHandlerOld.PlayerDenied(connection, refusal);
+                    return false;
+                }
             }
 
             await ServerPlayerConnectionHandlerOld.PlayerDenied(connection, "Data mismatch or account not found");
@@ -83,6 +96,53 @@ public static class PlayerJoinFilter
             await ServerPlayerConnectionHandlerOld.PlayerDenied(connection, "Error when checking authenticity");
             return false;
         }
+    }
+
+    private static string Refusal(UserConfig config, string username, UserConfig.User user, string address)
+    {
+        var blacklist = config.Blacklist;
+        if (blacklist != null &&
+            (HasName(blacklist.Usernames, username) ||
+             (blacklist.UserIds?.Contains(user.UserId) ?? false) ||
+             (address != null && (blacklist.Ips?.Contains(address) ?? false))))
+            return "Blacklisted";
+
+        var whitelist = config.Whitelist;
+        if (whitelist != null && ((whitelist.Usernames?.Count ?? 0) > 0 || (whitelist.Ips?.Count ?? 0) > 0))
+        {
+            var allowed = HasName(whitelist.Usernames, username) ||
+                          (whitelist.UserIds?.Contains(user.UserId) ?? false) ||
+                          (address != null && (whitelist.Ips?.Contains(address) ?? false)) ||
+                          (user.RegisteredFrom != null && (whitelist.Ips?.Contains(user.RegisteredFrom) ?? false));
+            if (!allowed) return "Not whitelisted";
+        }
+
+        return null;
+    }
+
+    private static bool HasName(List<string> names, string username) =>
+        names != null && names.Any(name => string.Equals(name, username, StringComparison.OrdinalIgnoreCase));
+
+    private static readonly FieldInfo KcpInternalConnection = AccessTools.Field(typeof(KcpServerConnection), "internalConnection");
+
+    // Connection.IpAddress is never set on a server; the address lives on kcp2k's own connection.
+    internal static string AddressOf(Connection connection)
+    {
+        try
+        {
+            if (connection?.TransportConnection is KcpServerConnection wrapper &&
+                KcpInternalConnection?.GetValue(wrapper) is kcp2k.KcpConnection kcp &&
+                kcp.GetRemoteEndPoint() is IPEndPoint endPoint)
+            {
+                var address = endPoint.Address;
+                return (address.IsIPv4MappedToIPv6 ? address.MapToIPv4() : address).ToString();
+            }
+        }
+        catch (Exception)
+        {
+        }
+
+        return null;
     }
 
     private static async Task<bool> FilterFlyCam(Connection connection, Stream stream)
