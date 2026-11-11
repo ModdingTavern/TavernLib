@@ -128,8 +128,6 @@ internal class AuthManager
     {
         try
         {
-            _manager.UserConfig.ReadFromFile(); // Read to make sure validation can be up-to date
-
             var typedPayload = JsonConvert.DeserializeObject<AuthPayloads.AuthenticateRequest>(payload.ToString());
             if (string.IsNullOrWhiteSpace(typedPayload.Token) || string.IsNullOrWhiteSpace(typedPayload.Username))
             {
@@ -143,9 +141,7 @@ internal class AuthManager
             TavernLogger.Msg($"User at {joinerIp} joining server");
             TavernLogger.Msg($"With payload {payload}");
 
-            if (!await CheckIfPermitted(joinerIp, typedPayload, stream)) return;
-
-            await PostPermissionCheck(stream, typedPayload, joinerIp);
+            await WriteResponse(stream, ResolveJoin(typedPayload, joinerIp));
         }
         catch (Exception e)
         {
@@ -154,65 +150,120 @@ internal class AuthManager
         }
     }
 
-    private async Task PostPermissionCheck(Stream stream, AuthPayloads.AuthenticateRequest payload, string ip)
+    // The checks and the registration run under users.json's lock on a fresh read, so two joins at
+    // once can't mint the same id or drop each other's entry. A file that can't be read refuses
+    // the join rather than reading as empty lists.
+    private object ResolveJoin(AuthPayloads.AuthenticateRequest payload, string ip)
     {
-        if (_manager.UserConfig.LastRead.Users.TryGetValue(payload.Username.ToLower(), out var userData))
+        if (!_manager.ServerConfig.Readable && !TryRead(_manager.ServerConfig.ReadFromFile))
+            return new AuthPayloads.GenericFail("The server can't read its settings right now");
+
+        object response = null;
+        try
         {
-            if (string.IsNullOrWhiteSpace(userData.Token)) userData.Token = payload.Token;
+            _manager.UserConfig.Update(config =>
+            {
+                response = CheckIfPermitted(config, ip, payload);
+                if (response != null) return false;
+
+                return Register(config, payload, ip, out response);
+            });
+        }
+        catch (Exception e) when (e is IOException or InvalidDataException or UnauthorizedAccessException or JsonException)
+        {
+            return new AuthPayloads.GenericFail("The server can't read its user list right now");
+        }
+
+        return response;
+    }
+
+    private static bool TryRead(Action read)
+    {
+        try
+        {
+            read();
+            return true;
+        }
+        catch (Exception)
+        {
+            return false;
+        }
+    }
+
+    // Returns true when users.json changed and must be written.
+    private bool Register(UserConfig config, AuthPayloads.AuthenticateRequest payload, string ip, out object response)
+    {
+        var key = payload.Username.ToLowerInvariant();
+        var changed = false;
+
+        if (config.Users.TryGetValue(key, out var userData) && userData != null)
+        {
+            if (string.IsNullOrWhiteSpace(userData.Token))
+            {
+                userData.Token = payload.Token;
+                changed = true;
+            }
             else if (payload.Token != userData.Token)
             {
                 TavernLogger.Msg($"Joining user at IP {ip} tried to take username");
-                await WriteResponse(stream, new AuthPayloads.GenericFail("Name taken by someone else, or you lost the token to your account!"));
-                return;
+                response = new AuthPayloads.GenericFail("Name taken by someone else, or you lost the token to your account!");
+                return false;
             }
         }
-
         else
         {
             TavernLogger.Msg($"Joining user at IP {ip} being allotted a slot in Users.json");
-            _manager.UserConfig.LastRead.Users[payload.Username.ToLower()] = new UserConfig.User
+            userData = new UserConfig.User
             {
                 RegisteredFrom = ip,
                 Token = payload.Token,
-                UserId = 1000000000U + (ulong)_manager.UserConfig.LastRead.Users.Count
+                UserId = NextUserId(config)
             };
-
-            userData = _manager.UserConfig.LastRead.Users[payload.Username.ToLower()];
+            config.Users[key] = userData;
+            changed = true;
         }
 
-        TavernLogger.Msg("Writing any potential changes during join to file");
-        _manager.UserConfig.WriteToFile();
-        await WriteResponse(stream, new AuthPayloads.AuthenticateOk(userData.UserId, _manager.ServerConfig.LastRead.QuestScene, _manager.ServerConfig.LastRead.TutorialScene));
+        response = new AuthPayloads.AuthenticateOk(userData.UserId, _manager.ServerConfig.LastRead.QuestScene, _manager.ServerConfig.LastRead.TutorialScene);
+        return changed;
     }
 
-    private async Task<bool> CheckIfPermitted(string joinerIp, AuthPayloads.AuthenticateRequest payload, Stream stream)
+    // One past the highest id in the file, never the user count: after a user is removed, the
+    // count would hand their id, and their save, to the next newcomer.
+    private static ulong NextUserId(UserConfig config)
+    {
+        var highest = config.Users.Values.Where(user => user != null).Select(user => user.UserId).DefaultIfEmpty(0UL).Max();
+        return Math.Max(FirstUserId, highest + 1);
+    }
+
+    private const ulong FirstUserId = 1000000000UL;
+
+    // Returns the refusal to send, or null when the joiner may continue.
+    private object CheckIfPermitted(UserConfig config, string joinerIp, AuthPayloads.AuthenticateRequest payload)
     {
         TavernLogger.Msg($"Checking if joining user {joinerIp} can join");
         // Whitelist
-        if (_manager.UserConfig.LastRead.Whitelist.Ips.Count > 0 || _manager.UserConfig.LastRead.Whitelist.Usernames.Count > 0)
+        if (config.Whitelist.Ips.Count > 0 || config.Whitelist.Usernames.Count > 0)
         {
-            var ipAllowed = _manager.UserConfig.LastRead.Whitelist.Ips.Contains(joinerIp);
-            var nameAllowed = _manager.UserConfig.LastRead.Whitelist.Usernames.Contains(payload.Username);
+            var ipAllowed = config.Whitelist.Ips.Contains(joinerIp);
+            var nameAllowed = config.Whitelist.Usernames.Contains(payload.Username);
 
             if (!ipAllowed && !nameAllowed)
             {
                 TavernLogger.Msg($"Joining user at {joinerIp} was not on the whitelist");
-                await WriteResponse(stream, new AuthPayloads.NotWhitelisted());
-                return false;
+                return new AuthPayloads.NotWhitelisted();
             }
         }
 
         // Blacklist
-        if (_manager.UserConfig.LastRead.Blacklist.Ips.Count > 0 || _manager.UserConfig.LastRead.Blacklist.Usernames.Count > 0)
+        if (config.Blacklist.Ips.Count > 0 || config.Blacklist.Usernames.Count > 0)
         {
-            var ipBlocked = _manager.UserConfig.LastRead.Blacklist.Ips.Contains(joinerIp);
-            var nameBlocked = _manager.UserConfig.LastRead.Blacklist.Usernames.Any(u => string.Equals(u, payload.Username, StringComparison.OrdinalIgnoreCase));
+            var ipBlocked = config.Blacklist.Ips.Contains(joinerIp);
+            var nameBlocked = config.Blacklist.Usernames.Any(u => string.Equals(u, payload.Username, StringComparison.OrdinalIgnoreCase));
 
             if (ipBlocked || nameBlocked)
             {
                 TavernLogger.Msg($"Joining user at {joinerIp} was on the blacklist");
-                await WriteResponse(stream, new AuthPayloads.GenericFail("Blacklisted"));
-                return false;
+                return new AuthPayloads.GenericFail("Blacklisted");
             }
         }
 
@@ -222,32 +273,29 @@ internal class AuthManager
             if (string.IsNullOrWhiteSpace(payload.Password))
             {
                 TavernLogger.Msg($"Joining user at {joinerIp} gave no password to server");
-                await WriteResponse(stream, new AuthPayloads.NeedsPassword());
-                return false;
+                return new AuthPayloads.NeedsPassword();
             }
 
             // Hash the user provided password again to match Tavern Launcher's password setup
             if (BackendUtils.HashDigest(payload.Password) != _manager.ServerConfig.LastRead.PasswordHash)
             {
                 TavernLogger.Msg($"Joining user at {joinerIp} gave the wrong password");
-                await WriteResponse(stream, new AuthPayloads.WrongPassword());
-                return false;
+                return new AuthPayloads.WrongPassword();
             }
         }
 
         // IP limit
         if (_manager.ServerConfig.LastRead.EnforceIpLimit)
         {
-            var matchingIpCount = _manager.UserConfig.LastRead.Users.Count(user => user.Value.RegisteredFrom == joinerIp);
+            var matchingIpCount = config.Users.Count(user => user.Value?.RegisteredFrom == joinerIp);
             if (matchingIpCount > 4)
             {
-                await WriteResponse(stream, new AuthPayloads.GenericFail("Too many accounts with same origin"));
-                return false;
+                return new AuthPayloads.GenericFail("Too many accounts with same origin");
             }
         }
 
         TavernLogger.Msg($"Joining user at {joinerIp} passed all authentication checks");
-        return true;
+        return null;
     }
 
     private async Task ManageWhitelistApplicationRequest(Stream stream, JObject payload, TcpClient joiner)
@@ -270,22 +318,21 @@ internal class AuthManager
             var joinerIp = ((IPEndPoint)joiner.Client.RemoteEndPoint).Address.ToString();
             TavernLogger.Msg($"Whitelist application from {username} at {joinerIp}");
 
-            _manager.WhitelistRequests.ReadFromFile(); // pick up anything the owner's panel already cleared
-            var requests = _manager.WhitelistRequests.LastRead.Requests;
-
-            var alreadyPending = requests.Exists(r =>
-                string.Equals(r.Username, username, StringComparison.OrdinalIgnoreCase) && r.Ip == joinerIp);
-
-            if (!alreadyPending)
+            var alreadyPending = false;
+            _manager.WhitelistRequests.Update(list =>
             {
-                requests.Add(new WhitelistRequestList.WhitelistRequest
+                alreadyPending = list.Requests.Exists(r =>
+                    string.Equals(r.Username, username, StringComparison.OrdinalIgnoreCase) && r.Ip == joinerIp);
+                if (alreadyPending) return false;
+
+                list.Requests.Add(new WhitelistRequestList.WhitelistRequest
                 {
                     Username = username,
                     Ip = joinerIp,
                     AppliedAt = DateTime.UtcNow.ToString("o"),
                 });
-                _manager.WhitelistRequests.WriteToFile();
-            }
+                return true;
+            });
 
             await WriteResponse(stream, new AuthPayloads.WhitelistApplicationReceived(!alreadyPending));
         }

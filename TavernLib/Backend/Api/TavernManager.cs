@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using TavernLib.Backend.Auth;
 using TavernLib.Backend.Server;
 using TavernLib.Backend.Server.Configs;
@@ -26,15 +27,29 @@ public class TavernManager : IService
         WhitelistRequests = new WhitelistRequestsConfigFile(Path.Combine(TavernDirectories.ModdingTavern, TavernDirectories.WhitelistRequests));
 
         TavernLogger.Msg("Reading configs");
-        UserConfig.ReadFromFile();
-        ServerConfig.ReadFromFile();
-        TavernConfig.ReadFromFile();
-        WhitelistRequests.ReadFromFile();
+        TryRead(UserConfig.ReadFromFile, TavernDirectories.Users);
+        TryRead(ServerConfig.ReadFromFile, TavernDirectories.ServerSettings);
+        TryRead(TavernConfig.ReadFromFile, TavernDirectories.TavernServer);
+        TryRead(WhitelistRequests.ReadFromFile, TavernDirectories.WhitelistRequests);
 
         TavernLogger.Msg("Creating controllers");
         if (ServerConfig.LastRead.CommunityListed) ListingController = new ServerListingController(this);
         if (!CommandLineArguments.Contains(TavernArgs.DontManageAuth)) AuthManager = new AuthManager(this);
 
         TavernLogger.Msg($"Listing Is Active: {ListingController != null}, Managing Auth: {AuthManager != null}");
+    }
+
+    // A file that can't be read doesn't stop TavernLib loading. Joins that need it are refused
+    // until it reads again, since every join reads it afresh.
+    private static void TryRead(Action read, string path)
+    {
+        try
+        {
+            read();
+        }
+        catch (Exception)
+        {
+            TavernLogger.Error($"TavernLib keeps running without {Path.GetFileName(path)}; joins that need it are refused until it reads.");
+        }
     }
 }

@@ -22,7 +22,15 @@ public class GarbageCollectIntervalPatch
         var manager = TavernServices.GetService<TavernManager>();
         if (manager == null) return;
 
-        manager.ServerConfig.ReadFromFile();
+        try
+        {
+            manager.ServerConfig.ReadFromFile();
+        }
+        catch (System.Exception)
+        {
+            return; // unreadable settings: keep the prefab's own interval
+        }
+
         IntervalField?.SetValue(__instance, manager.ServerConfig.LastRead.GarbageCollectionTimer);
     }
 }

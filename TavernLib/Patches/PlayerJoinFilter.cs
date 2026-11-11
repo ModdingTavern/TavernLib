@@ -63,10 +63,8 @@ public static class PlayerJoinFilter
             if (tavernTokens.Count == 1 && ids.Count == 1 && names.Count == 1 &&
                 ulong.TryParse(ids[0].Value, NumberStyles.None, CultureInfo.InvariantCulture, out var id))
             {
-                var userConfig = TavernServices.GetService<TavernManager>().UserConfig;
-                userConfig.ReadFromFile();
-                var users = userConfig.LastRead.Users;
-                if (users.TryGetValue(names[0].Value.ToLowerInvariant(), out var user) && user.UserId == id && !string.IsNullOrEmpty(user.Token) && user.Token == tavernTokens[0].Value) return true;
+                var users = TavernServices.GetService<TavernManager>().UserConfig.Read().Users;
+                if (users.TryGetValue(names[0].Value.ToLowerInvariant(), out var user) && user != null && user.UserId == id && !string.IsNullOrEmpty(user.Token) && user.Token == tavernTokens[0].Value) return true;
             }
 
             await ServerPlayerConnectionHandlerOld.PlayerDenied(connection, "Data mismatch or account not found");
@@ -95,10 +93,9 @@ public static class PlayerJoinFilter
                 var token = JWTUtility.CreateFromString(requestJoinMessage.UserCredentials, true);
                 
                 var username = token.Claims.FirstOrDefault(c => c.Type == "Username")?.Value ?? "";
-                var users = TavernServices.GetService<TavernManager>().UserConfig;
-                users.ReadFromFile(); // see FilterInvalidTokens for why this can't be skipped
-                
-                if (users.TryGetUser(username, out var user) && user.CanEnterFlyMode)
+                var users = TavernServices.GetService<TavernManager>().UserConfig.Read().Users;
+
+                if (users.TryGetValue(username.ToLowerInvariant(), out var user) && user != null && user.CanEnterFlyMode)
                 {
                     TavernLogger.Msg($"User {username} allowed unorthodox role via role");
                     return true;
