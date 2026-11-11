@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Net.Http;
+using System.Text;
 using System.Threading.Tasks;
-using Alta.Api.DataTransferModels.Extensions;
+using Newtonsoft.Json;
 using TavernLib.Backend.Api;
 using UnityEngine;
 
@@ -71,7 +72,7 @@ public class ServerListingController
         try
         {
             var payload = ServerListingPayload.FromConfig(_manager.ServerConfig, _manager.TavernConfig);
-            await _apiClient.PostAsync(BackendUtils.ServerUri, new HttpClientExtensions.JsonContent(payload));
+            await _apiClient.PostAsync(BackendUtils.ServerUri, JsonBody(payload));
         }
         catch (Exception e)
         {
@@ -97,6 +98,11 @@ public class ServerListingController
             listing_token = _manager.ServerConfig.LastRead.CommunityListingToken
         };
             
-        _apiClient.DeleteAsync(BackendUtils.ServerUri, new HttpClientExtensions.JsonContent(payload));
+        _apiClient.SendAsync(new HttpRequestMessage(HttpMethod.Delete, BackendUtils.ServerUri) { Content = JsonBody(payload) });
     }
+
+    // Not the game's HttpClientExtensions: its JsonContent and DeleteAsync write the whole body,
+    // listing token included, to the game's log on every call.
+    private static StringContent JsonBody(object payload) =>
+        new(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
 }

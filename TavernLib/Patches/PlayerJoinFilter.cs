@@ -53,8 +53,6 @@ public static class PlayerJoinFilter
             var requestJoinMessage = new RequestJoinMessage();
             requestJoinMessage.Serialize(connection, readingStream);
 
-            TavernLogger.Msg($"User trying to join with JWT {requestJoinMessage.UserCredentials}");
-
             var claims = JWTUtility.CreateFromString(requestJoinMessage.UserCredentials, true).Claims.ToList();
             var tavernTokens = claims.Where(claim => claim.Type == "TavernToken").ToList();
             var ids = claims.Where(claim => claim.Type == "UserId").ToList();
@@ -63,6 +61,14 @@ public static class PlayerJoinFilter
             if (tavernTokens.Count == 1 && ids.Count == 1 && names.Count == 1 &&
                 ulong.TryParse(ids[0].Value, NumberStyles.None, CultureInfo.InvariantCulture, out var id))
             {
+                // Refused here rather than in CheckApproved, which logs the whole join token when it refuses.
+                if (requestJoinMessage.PlayerId < 0 || (ulong)requestJoinMessage.PlayerId != id)
+                {
+                    TavernLogger.Warn($"Join denied for {names[0].Value}: the token is for user {id}, the join asked for {requestJoinMessage.PlayerId}");
+                    await ServerPlayerConnectionHandlerOld.PlayerDenied(connection, "Token was for a different user");
+                    return false;
+                }
+
                 var users = TavernServices.GetService<TavernManager>().UserConfig.Read().Users;
                 if (users.TryGetValue(names[0].Value.ToLowerInvariant(), out var user) && user != null && user.UserId == id && !string.IsNullOrEmpty(user.Token) && user.Token == tavernTokens[0].Value) return true;
             }
@@ -117,8 +123,8 @@ public static class PlayerJoinFilter
     }
 
     [HarmonyPatch(typeof(ConfirmJoinMessage), MethodType.Constructor, [typeof(bool), typeof(bool), typeof(ClientJoinResult), typeof(JoinedServerInfo), typeof(string)]), HarmonyPostfix]
-    public static void LogDisconnectAttempts(bool isAllowed, bool isDoingPrerequisites, ClientJoinResult joinResult, JoinedServerInfo serverInfo, string error, ref ConfirmJoinMessage __instance)
+    public static void LogDisconnectAttempts(bool isAllowed, string error)
     {
-        TavernLogger.Warn($"ConfirmJoinMessage created {JsonConvert.SerializeObject(__instance, Formatting.Indented)}");
+        if (!isAllowed) TavernLogger.Msg($"Join refused: {error}");
     }
 }

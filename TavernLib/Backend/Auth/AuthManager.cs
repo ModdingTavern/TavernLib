@@ -97,7 +97,7 @@ internal class AuthManager
             else if (jsonPayload.ContainsKey("username")) await ManageAuthRequest(stream, jsonPayload, client);
             else
             {
-                TavernLogger.Warn($"Unknown payload sent to AuthManager {jsonPayload}");
+                TavernLogger.Warn($"Unknown payload sent to AuthManager, keys: {string.Join(", ", jsonPayload.Properties().Select(p => p.Name))}");
             }
         }
         catch (Exception e)
@@ -138,8 +138,7 @@ internal class AuthManager
 
             var joinerIp = ((IPEndPoint)joiner.Client.RemoteEndPoint).Address.ToString();
 
-            TavernLogger.Msg($"User at {joinerIp} joining server");
-            TavernLogger.Msg($"With payload {payload}");
+            TavernLogger.Msg($"User {typedPayload.Username} at {joinerIp} joining server");
 
             await WriteResponse(stream, ResolveJoin(typedPayload, joinerIp));
         }
