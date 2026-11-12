@@ -210,9 +210,12 @@
     <Compile Include="ModulePorts\ChunkCommandModule.cs" />
     <Compile Include="ModulePorts\DocumentModule.cs" />
     <Compile Include="ModulePorts\PlayerCommandModule.cs" />
+    <Compile Include="ModulePorts\Lines.cs" />
     <Compile Include="ModulePorts\TokenCommandModule.cs" />
     <Compile Include="Patches\CommandSecurityPatches.cs" />
+    <Compile Include="Patches\CommandResultPatches.cs" />
     <Compile Include="Patches\ConsoleTokenPatches.cs" />
+    <Compile Include="Patches\GameCommandPatches.cs" />
     <Compile Include="Patches\ConsoleEventsPatch.cs" />
     <Compile Include="Patches\EventPatches.cs" />
     <Compile Include="Patches\GarbageCollectionInterval.cs" />

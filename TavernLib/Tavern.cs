@@ -38,6 +38,7 @@ public class Tavern : MelonPlugin
     public override void OnLateInitializeMelon()
     {
         SetupSelectionFixPatch();
+        GameCommandPatches.Apply(HarmonyInstance);
     }
 
 
