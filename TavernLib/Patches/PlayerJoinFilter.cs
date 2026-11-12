@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Net;
@@ -12,6 +11,7 @@ using Alta.NetworkingTransport.Kcp;
 using Alta.Serialization;
 using HarmonyLib;
 using TavernLib.Backend.Api;
+using TavernLib.Backend.Auth;
 using TavernLib.Backend.Server.Configs;
 using TavernLib.Services;
 
@@ -73,11 +73,12 @@ public static class PlayerJoinFilter
                     return false;
                 }
 
-                var config = TavernServices.GetService<TavernManager>().UserConfig.Read();
+                var manager = TavernServices.GetService<TavernManager>();
+                var config = manager.UserConfig.Read();
                 if (config.Users.TryGetValue(names[0].Value.ToLowerInvariant(), out var user) && user != null && user.UserId == id && !string.IsNullOrEmpty(user.Token) && user.Token == tavernTokens[0].Value)
                 {
                     // 1762 checks these too, but a client can skip 1762 and come straight here.
-                    var refusal = Refusal(config, names[0].Value, user, AddressOf(connection));
+                    var refusal = Refusal(manager, config, names[0].Value, user, AddressOf(connection));
                     if (refusal == null) return true;
 
                     TavernLogger.Msg($"Join denied for {names[0].Value}: {refusal}");
@@ -98,30 +99,27 @@ public static class PlayerJoinFilter
         }
     }
 
-    private static string Refusal(UserConfig config, string username, UserConfig.User user, string address)
+    // server_settings.json is read afresh too, so whitelist_enabled applies with no restart, on a
+    // launcher-run server as well.
+    private static string Refusal(TavernManager manager, UserConfig config, string username, UserConfig.User user, string address)
     {
-        var blacklist = config.Blacklist;
-        if (blacklist != null &&
-            (HasName(blacklist.Usernames, username) ||
-             (blacklist.UserIds?.Contains(user.UserId) ?? false) ||
-             (address != null && (blacklist.Ips?.Contains(address) ?? false))))
-            return "Blacklisted";
+        if (JoinRules.IsBlacklisted(config, username, user.UserId, address)) return "Blacklisted";
 
-        var whitelist = config.Whitelist;
-        if (whitelist != null && ((whitelist.Usernames?.Count ?? 0) > 0 || (whitelist.Ips?.Count ?? 0) > 0))
+        ServerSettings settings;
+        try
         {
-            var allowed = HasName(whitelist.Usernames, username) ||
-                          (whitelist.UserIds?.Contains(user.UserId) ?? false) ||
-                          (address != null && (whitelist.Ips?.Contains(address) ?? false)) ||
-                          (user.RegisteredFrom != null && (whitelist.Ips?.Contains(user.RegisteredFrom) ?? false));
-            if (!allowed) return "Not whitelisted";
+            settings = manager.ServerConfig.Read();
         }
+        catch (Exception)
+        {
+            return "The server can't read its settings right now";
+        }
+
+        if (JoinRules.WhitelistOn(settings, config) && !JoinRules.IsWhitelisted(config, username, user.UserId, address, user.RegisteredFrom))
+            return "Not whitelisted";
 
         return null;
     }
-
-    private static bool HasName(List<string> names, string username) =>
-        names != null && names.Any(name => string.Equals(name, username, StringComparison.OrdinalIgnoreCase));
 
     private static readonly FieldInfo KcpInternalConnection = AccessTools.Field(typeof(KcpServerConnection), "internalConnection");
 

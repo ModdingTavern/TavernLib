@@ -187,7 +187,9 @@
   <ItemGroup>
     <Compile Include="Backend\Api\TavernManager.cs" />
     <Compile Include="Backend\Auth\AuthManager.cs" />
+    <Compile Include="Backend\Auth\AuthLimits.cs" />
     <Compile Include="Backend\Auth\AuthPayloads.cs" />
+    <Compile Include="Backend\Auth\JoinRules.cs" />
     <Compile Include="Backend\Server\Configs\ServerConfigFile.cs" />
     <Compile Include="Backend\Server\Configs\ServerSettingsConfig.cs" />
     <Compile Include="Backend\Server\Configs\TavernServerConfig.cs" />
