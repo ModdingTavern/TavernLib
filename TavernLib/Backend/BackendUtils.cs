@@ -6,7 +6,9 @@ namespace TavernLib.Backend;
 
 public static class BackendUtils
 {
-    public static string TavernApi => "http://themoddingtavern.com:1763";
+    // /listing_api <url> points the community listing somewhere else, such as a local test stub.
+    public static string TavernApi =>
+        CommandLineArguments.TryGetNextArguments(TavernArgs.ListingApi, 1, out var args) ? args[0] : "http://themoddingtavern.com:1763";
     public static string ServerUri => "/servers";
 
 
