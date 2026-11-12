@@ -12,6 +12,8 @@ namespace TavernLib.Backend.RemoteConsole;
 
 public class ConsoleTokenList
 {
+    // Raised by token rotate owner. The launcher reads it to write console_token.txt.
+    [JsonProperty("owner_generation")] public int OwnerGeneration { get; set; }
     [JsonProperty("tokens")] public List<ConsoleToken> Tokens { get; set; } = new();
     [JsonExtensionData] private IDictionary<string, JToken> Extra { get; set; }
 }
@@ -48,7 +50,11 @@ internal static class ConsoleTokenStore
     private static readonly string FilePath = Path.Combine(TavernDirectories.ModdingTavern, "console_tokens.json");
     private static readonly ConsoleTokenFile TokenFile = new(FilePath);
     private static readonly ConditionalWeakTable<CommandPart, string> Paths = new();
+    private static readonly TimeSpan RetryEvery = TimeSpan.FromSeconds(5);
     private static volatile Dictionary<string, Entry> _byId = new();
+    private static volatile int _ownerGeneration;
+    private static DateTime _lastLoad = DateTime.MinValue;
+    private static bool _loadErrorLogged;
 
     private sealed class Entry(ConsoleToken token)
     {
@@ -59,13 +65,18 @@ internal static class ConsoleTokenStore
 
     public static bool Loaded { get; private set; }
 
-    // A missing file means no named tokens yet; it is created by the first token create. A file
-    // that can't be read leaves every named token refused until it reads.
+    // The owner token's generation: 0 until it is first rotated.
+    public static int OwnerGeneration => _ownerGeneration;
+
+    // A missing file means no named tokens yet and an owner token never rotated; it is created by
+    // the first token create or rotate. A file that can't be read leaves every console token
+    // refused, the owner's too, since it holds the owner token's generation.
     public static void Load()
     {
+        _lastLoad = DateTime.UtcNow;
         if (!File.Exists(FilePath))
         {
-            Loaded = true;
+            Rebuild(new ConsoleTokenList());
             return;
         }
 
@@ -75,8 +86,19 @@ internal static class ConsoleTokenStore
         }
         catch (Exception)
         {
-            TavernLogger.Error("console_tokens.json can't be read, so every named console token is refused until it can. The owner token still works.");
+            if (_loadErrorLogged) return;
+            _loadErrorLogged = true;
+            TavernLogger.Error("console_tokens.json can't be read, so every console token is refused until it can, the owner token too: the file holds its generation.");
         }
+    }
+
+    // True once the file has been read. One that couldn't be is tried again at most every few
+    // seconds, so a fixed file applies with no restart.
+    public static bool EnsureLoaded()
+    {
+        if (Loaded) return true;
+        if (DateTime.UtcNow - _lastLoad >= RetryEvery) Load();
+        return Loaded;
     }
 
     public static ConsoleToken Find(string id) =>
@@ -119,7 +141,9 @@ internal static class ConsoleTokenStore
     {
         _byId = (list.Tokens ?? []).Where(token => !string.IsNullOrEmpty(token?.Id))
             .GroupBy(token => token.Id).ToDictionary(group => group.Key, group => new Entry(group.First()));
+        _ownerGeneration = list.OwnerGeneration;
         Loaded = true;
+        _loadErrorLogged = false;
     }
 
     // The gate: may this named token see and run this command or module? A module passes when a

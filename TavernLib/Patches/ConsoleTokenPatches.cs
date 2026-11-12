@@ -139,12 +139,18 @@ public static class ConsoleTokenPatches
     }
 
     // Closes every 1760 session of a named token. Returns how many.
-    internal static int CloseSessions(string id)
+    internal static int CloseSessions(string id) => Close(handler => ConsoleAuth.TokenIdOf(handler.UserInfo) == id, "console token " + id);
+
+    // Closes every 1760 session logged in with the owner token but keep. Returns how many.
+    internal static int CloseOwnerSessions(WebSocketCommandHandler keep) =>
+        Close(handler => handler != keep && handler.UserInfo != null && ConsoleAuth.TokenIdOf(handler.UserInfo) == null, "the owner token");
+
+    private static int Close(Func<IRemoteConsoleHandler, bool> which, string whose)
     {
         var closed = 0;
         foreach (var handler in ConnectedHandlers())
         {
-            if (ConsoleAuth.TokenIdOf(handler.UserInfo) != id || handler is not WebSocketCommandHandler socket) continue;
+            if (!which(handler) || handler is not WebSocketCommandHandler socket) continue;
 
             try
             {
@@ -154,7 +160,7 @@ public static class ConsoleTokenPatches
             }
             catch (Exception e)
             {
-                TavernLogger.Warn($"Could not close a session of console token {id}: {e.Message}");
+                TavernLogger.Warn($"Could not close a session of {whose}: {e.Message}");
             }
         }
 

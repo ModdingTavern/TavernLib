@@ -22,6 +22,7 @@ public static class TokenCommandModule
     private const int PresetMaxLength = 16;
     private const int MaxDays = 3650;
     private const string IdAlphabet = "abcdefghjkmnpqrstuvwxyz23456789";
+    private const string OwnerId = "owner";
 
     public class TokenInfo
     {
@@ -61,7 +62,7 @@ public static class TokenCommandModule
     {
         var id = CallerTokenId();
         if (id == null)
-            return new TokenInfo { Id = "owner", Name = "owner", Preset = ConsoleToken.FullPreset, Access = ["everything"], Status = "active" };
+            return new TokenInfo { Id = OwnerId, Name = OwnerId, Preset = ConsoleToken.FullPreset, Access = ["everything"], Status = "active" };
 
         var token = ConsoleTokenStore.Find(id);
         return token == null ? "Unknown token " + id : Info(token);
@@ -157,10 +158,11 @@ public static class TokenCommandModule
         return $"Revoked {name} ({id}); closed {ConsoleTokenPatches.CloseSessions(id)} session(s).";
     }
 
-    [Command("rotate", "Gives a named token new text: the old text stops working and its sessions close")]
+    [Command("rotate", "Gives a named token, or the owner token (token rotate owner), new text: the old text stops working and its sessions close")]
     private static string Rotate(string id)
     {
         if (OwnerOnly() is { } refusal) return refusal;
+        if (id == OwnerId) return RotateOwner();
 
         ConsoleToken rotated = null;
         if (Store(list =>
@@ -176,6 +178,26 @@ public static class TokenCommandModule
         if (rotated == null) return "Refused: no active token " + id;
         var closed = ConsoleTokenPatches.CloseSessions(id);
         return $"Rotated {rotated.Name} ({id}); closed {closed} session(s). Its new token:\n{ConsoleAuth.Mint(ConsoleTokenStore.Find(id))}";
+    }
+
+    // The session that asked stays open; every other owner session closes. Ids never hold an o,
+    // so no named token is called owner.
+    private static string RotateOwner()
+    {
+        if (ConsoleAuth.Secret == null) return "Refused: server_secret.key can't be read";
+        if (Store(list =>
+        {
+            list.OwnerGeneration++;
+            return true;
+        }) is { } failed) return failed;
+
+        var text = ConsoleAuth.CurrentOwnerToken();
+        if (text == null) return "Refused: console_tokens.json can't be read";
+
+        var written = ConsoleAuth.WriteOwnerToken(text);
+        var closed = ConsoleTokenPatches.CloseOwnerSessions(WebSocketCommandHandler.Current);
+        var file = written == null ? "console_token.txt has it" : $"console_token.txt could not be written ({written}), so put it there by hand";
+        return $"Rotated the owner token; closed {closed} other session(s). Bots and tools that use it need the new one; {file}. Its new token:\n{text}";
     }
 
     [Command("show", "Shows a named token's text again")]

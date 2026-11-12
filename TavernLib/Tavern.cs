@@ -85,8 +85,8 @@ public class Tavern : MelonPlugin
             if (CommandLineArguments.Contains(CommandLineArguments.StartServerArgument))
             {
                 TavernLogger.Msg("Booting TavernLib in server mode");
-                if (!CommandLineArguments.Contains(TavernArgs.DontManageAuth)) ConsoleAuth.EnsureOwnerToken();
                 ConsoleTokenStore.Load();
+                ConsoleAuth.EnsureOwnerToken();
                 ConsoleTokenPatches.Start();
 
                 if (!CommandLineArguments.Contains(TavernArgs.DontManageAuth)) StartLogArchiveTimer();

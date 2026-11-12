@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.IO;
+using System.Globalization;
 using System.Linq;
 using System.Net;
 using System.Runtime.CompilerServices;
@@ -113,40 +114,81 @@ internal static class ConsoleAuth
 
     #region Tokens
 
-    // The owner token: the same text the launcher writes, so either one can write the file.
-    private static string OwnerToken(byte[] secret) => Sign(B64Url(Encoding.UTF8.GetBytes(
+    // The owner token: the same text the launcher's build_console_token writes, so either one can
+    // write the file. Generation 0 (never rotated) has no gen claim, so it is the text every
+    // earlier version wrote.
+    private static string OwnerToken(byte[] secret, int generation) => Sign(B64(Encoding.UTF8.GetBytes(
         "{\"UserId\":\"0\",\"Username\":\"Server\",\"role\":\"Access\"," +
         "\"is_verified\":\"True\",\"is_member\":\"True\",\"server_id\":\"-1\"," +
         "\"Policy\":[\"offline\",\"play_offline\",\"server_access_pre_alpha\"," +
         "\"game_access_public\",\"server_owner\",\"debug_features\"," +
         "\"database_admin\",\"reuse_refresh_tokens\"]," +
+        (generation > 0 ? "\"gen\":" + generation.ToString(CultureInfo.InvariantCulture) + "," : "") +
         "\"exp\":9999999999,\"iss\":\"AltaWebAPI\",\"aud\":\"AltaClient\"}")), secret);
 
-    // Writes console_token.txt when it is missing or no longer matches the secret.
+    // The owner token's current text; null while the secret or console_tokens.json can't be read.
+    public static string CurrentOwnerToken()
+    {
+        var secret = Secret;
+        return secret == null || !ConsoleTokenStore.EnsureLoaded() ? null : OwnerToken(secret, ConsoleTokenStore.OwnerGeneration);
+    }
+
+    // Writes console_token.txt when it is missing or isn't the current owner token: signed with
+    // another secret, or a generation since rotated away. On a launcher-run server the launcher
+    // writes it first, and an older launcher writes the never-rotated text, which this puts right.
     public static void EnsureOwnerToken()
     {
         try
         {
-            var secret = Secret;
-            if (secret == null) return;
+            var current = CurrentOwnerToken();
+            if (current == null) return;
+            if (File.Exists(OwnerTokenPath) && IsCurrentOwnerToken(File.ReadAllText(OwnerTokenPath).Trim())) return;
 
-            if (File.Exists(OwnerTokenPath) && Verify(File.ReadAllText(OwnerTokenPath).Trim(), secret, out _)) return;
-
-            Directory.CreateDirectory(Path.GetDirectoryName(OwnerTokenPath));
-            var temp = OwnerTokenPath + ".tmp";
-            File.WriteAllText(temp, OwnerToken(secret));
-            if (File.Exists(OwnerTokenPath)) File.Replace(temp, OwnerTokenPath, null);
-            else File.Move(temp, OwnerTokenPath);
+            if (WriteOwnerToken(current) is { } problem) TavernLogger.Error($"Could not write console_token.txt: {problem}");
         }
         catch (Exception e)
         {
-            TavernLogger.Error($"Could not write console_token.txt: {e.Message}");
+            TavernLogger.Error($"Could not read console_token.txt: {e.Message}");
+        }
+    }
+
+    // Null once written, else why it couldn't be.
+    public static string WriteOwnerToken(string text)
+    {
+        try
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(OwnerTokenPath));
+            var temp = OwnerTokenPath + ".tmp";
+            File.WriteAllText(temp, text);
+            if (File.Exists(OwnerTokenPath)) File.Replace(temp, OwnerTokenPath, null);
+            else File.Move(temp, OwnerTokenPath);
+            return null;
+        }
+        catch (Exception e)
+        {
+            return e.Message;
+        }
+    }
+
+    private static bool IsCurrentOwnerToken(string raw)
+    {
+        var secret = Secret;
+        if (secret == null) return false;
+
+        try
+        {
+            if (!Verify(raw, secret, out var claims)) return false;
+            var policies = PoliciesOf(claims);
+            return policies.Contains("server_owner") && !policies.Any(policy => policy.StartsWith(TokenPolicy, StringComparison.Ordinal)) &&
+                   GenerationOf(claims) == ConsoleTokenStore.OwnerGeneration;
+        }
+        catch (JsonException)
+        {
+            return false;
         }
     }
 
     // A named token's text depends only on its row, so the same row always gives the same text.
-    // The payload is standard base64: the game reads the payload with Convert.FromBase64String, so
-    // base64url's '-' and '_' would stop the login before TavernLib sees it.
     public static string Mint(ConsoleToken token)
     {
         var secret = Secret ?? throw new InvalidOperationException("server_secret.key can't be read");
@@ -170,8 +212,7 @@ internal static class ConsoleAuth
             ["iss"] = "AltaWebAPI",
             ["aud"] = "AltaClient",
         };
-        var body = Convert.ToBase64String(Encoding.UTF8.GetBytes(payload.ToString(Formatting.None))).TrimEnd('=');
-        return Sign(body, secret);
+        return Sign(B64(Encoding.UTF8.GetBytes(payload.ToString(Formatting.None))), secret);
     }
 
     private static string Sign(string payload, byte[] secret)
@@ -260,6 +301,8 @@ internal static class ConsoleAuth
         {
             if (!policies.Contains("server_owner")) return "not a console token";
             if (OwnerLocalOnly() && !IsLoopback(address)) return "the owner token is local only (console_owner_local_only)";
+            if (!ConsoleTokenStore.EnsureLoaded()) return "console_tokens.json can't be read";
+            if (GenerationOf(claims) != ConsoleTokenStore.OwnerGeneration) return "replaced by a rotated token";
             return null;
         }
 
@@ -269,13 +312,13 @@ internal static class ConsoleAuth
         // Port 1758 runs every command as the server itself, whatever token logged in.
         if (path != LoginPath.WebSocket) return "named tokens work on port 1760 only";
 
-        if (!ConsoleTokenStore.Loaded) return "console_tokens.json can't be read";
+        if (!ConsoleTokenStore.EnsureLoaded()) return "console_tokens.json can't be read";
         var token = ConsoleTokenStore.Find(id);
         if (token == null) return "unknown token";
 
         var status = token.Status(DateTime.UtcNow);
         if (status != "active") return status;
-        if (claims.Value<string>("gen") != token.Generation.ToString()) return "replaced by a rotated token";
+        if (GenerationOf(claims) != token.Generation) return "replaced by a rotated token";
         if (policies.Contains("server_owner") != token.IsFull) return "access changed since it was made";
 
         ConsoleTokenStore.Touch(id);
@@ -288,6 +331,10 @@ internal static class ConsoleAuth
         var values = token is JArray array ? array.Select(item => item.Value<string>()) : [token?.Value<string>()];
         return values.Where(value => value != null).SelectMany(value => value.Split(',')).ToList();
     }
+
+    // No gen claim is generation 0, the owner token never rotated; one that isn't a number is -1.
+    private static long GenerationOf(JObject claims) =>
+        claims["gen"] == null ? 0 : long.TryParse(claims.Value<string>("gen"), NumberStyles.None, CultureInfo.InvariantCulture, out var gen) ? gen : -1;
 
     private static bool OwnerLocalOnly()
     {
@@ -323,6 +370,10 @@ internal static class ConsoleAuth
 
     public static string B64Url(byte[] bytes) =>
         Convert.ToBase64String(bytes).Replace('+', '-').Replace('/', '_').TrimEnd('=');
+
+    // A token payload is standard base64: the game reads it with Convert.FromBase64String, so
+    // base64url's '-' and '_' would stop the login before TavernLib sees it.
+    private static string B64(byte[] bytes) => Convert.ToBase64String(bytes).TrimEnd('=');
 
     // Reads base64 and base64url alike; null when it isn't either.
     private static byte[] FromB64(string text)
