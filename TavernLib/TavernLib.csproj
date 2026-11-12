@@ -190,6 +190,9 @@
     <Compile Include="Backend\Auth\AuthLimits.cs" />
     <Compile Include="Backend\Auth\AuthPayloads.cs" />
     <Compile Include="Backend\Auth\JoinRules.cs" />
+    <Compile Include="Backend\RemoteConsole\ConsoleAuth.cs" />
+    <Compile Include="Backend\RemoteConsole\ConsoleTokenLog.cs" />
+    <Compile Include="Backend\RemoteConsole\ConsoleTokenStore.cs" />
     <Compile Include="Backend\Server\Configs\ServerConfigFile.cs" />
     <Compile Include="Backend\Server\Configs\ServerSettingsConfig.cs" />
     <Compile Include="Backend\Server\Configs\TavernServerConfig.cs" />
@@ -207,7 +210,9 @@
     <Compile Include="ModulePorts\ChunkCommandModule.cs" />
     <Compile Include="ModulePorts\DocumentModule.cs" />
     <Compile Include="ModulePorts\PlayerCommandModule.cs" />
+    <Compile Include="ModulePorts\TokenCommandModule.cs" />
     <Compile Include="Patches\CommandSecurityPatches.cs" />
+    <Compile Include="Patches\ConsoleTokenPatches.cs" />
     <Compile Include="Patches\ConsoleEventsPatch.cs" />
     <Compile Include="Patches\EventPatches.cs" />
     <Compile Include="Patches\GarbageCollectionInterval.cs" />

@@ -5,6 +5,7 @@ using MelonLoader;
 using MonoMod.RuntimeDetour;
 using TavernLib.Backend;
 using TavernLib.Backend.Api;
+using TavernLib.Backend.RemoteConsole;
 using TavernLib.Backend.Server;
 using TavernLib.Debugging;
 using TavernLib.ModdingApi;
@@ -84,7 +85,9 @@ public class Tavern : MelonPlugin
             if (CommandLineArguments.Contains(CommandLineArguments.StartServerArgument))
             {
                 TavernLogger.Msg("Booting TavernLib in server mode");
-                if (!CommandLineArguments.Contains(TavernArgs.DontManageAuth)) TeenyPatches.EnsureConsoleToken();
+                if (!CommandLineArguments.Contains(TavernArgs.DontManageAuth)) ConsoleAuth.EnsureOwnerToken();
+                ConsoleTokenStore.Load();
+                ConsoleTokenPatches.Start();
 
                 if (!CommandLineArguments.Contains(TavernArgs.DontManageAuth)) StartLogArchiveTimer();
 
