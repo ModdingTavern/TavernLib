@@ -209,10 +209,7 @@ public static class ChunkCommandModule
 	}
 
 	[Command("info", "Display info about a chunk")]
-	private static void PrintChunkInfo(Chunk chunk)
-	{
-		logger.Trace(GetChunkInfoAsTable(chunk.AsEnumerable()));
-	}
+	private static string PrintChunkInfo(Chunk chunk) => GetChunkInfoAsTable(chunk.AsEnumerable());
 
 	[Command("loadall", "Load All Chunks")]
 	[ServerOnly]

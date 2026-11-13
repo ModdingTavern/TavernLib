@@ -1,4 +1,6 @@
-﻿using Newtonsoft.Json;
+﻿using System.Collections.Generic;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace TavernLib.Backend.Server.Configs;
 
@@ -18,6 +20,8 @@ public class ServerSettings
     [JsonProperty(PropertyName = "garbage_collection_timer")] public float GarbageCollectionTimer { get; private set; } = 30f;
     [JsonProperty(PropertyName = "server_backup_time")] public float ServerBackupTime { get; private set; }
     [JsonProperty(PropertyName = "server_backup_max_backups")] public int ServerBackupMaxBackups { get; private set; }
+    [JsonProperty(PropertyName = "console_owner_local_only")] public bool ConsoleOwnerLocalOnly { get; private set; }
+    [JsonExtensionData] private IDictionary<string, JToken> Extra { get; set; }
 }
 
 public class ServerSettingsConfig(string filePath) : ServerConfigFile<ServerSettings>(filePath)

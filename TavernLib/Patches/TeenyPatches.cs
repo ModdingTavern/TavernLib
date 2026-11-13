@@ -10,14 +10,13 @@ using Alta.QuickAccessActions;
 using HarmonyLib;
 using System;
 using System.Collections.Generic;
-using System.IdentityModel.Tokens.Jwt;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Security.Cryptography;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using TavernLib.ModdingApi;
 
 namespace TavernLib.Patches;
 
@@ -156,159 +155,53 @@ public class TeenyPatches
 
     #endregion
 
-    #region ServerConsoleManager
-
-    private static readonly string ServerSecretPath = Path.Combine(TavernDirectories.ModdingTavern, "server_secret.key");
-
-    private static byte[] _serverSecret;
-    private static byte[] ServerSecret => _serverSecret ??= LoadOrCreateServerSecret();
-
-    private static byte[] HexToBytes(string hex)
-    {
-        byte[] result = new byte[hex.Length / 2];
-        for (int i = 0; i < result.Length; i++)
-            result[i] = Convert.ToByte(hex.Substring(i * 2, 2), 16);
-        return result;
-    }
-
-    private static string BytesToHex(byte[] bytes)
-    {
-        var sb = new System.Text.StringBuilder(bytes.Length * 2);
-        foreach (byte b in bytes)
-            sb.Append(b.ToString("x2"));
-        return sb.ToString();
-    }
-
-    private static byte[] LoadOrCreateServerSecret()
-    {
-        try
-        {
-            if (File.Exists(ServerSecretPath))
-            {
-                byte[] existing = HexToBytes(File.ReadAllText(ServerSecretPath).Trim());
-                if (existing.Length == 32) return existing;
-            }
-        }
-        catch { }
-
-        byte[] secret = new byte[32];
-        using (var rng = RandomNumberGenerator.Create())
-            rng.GetBytes(secret);
-
-        try
-        {
-            Directory.CreateDirectory(Path.GetDirectoryName(ServerSecretPath));
-            File.WriteAllText(ServerSecretPath, BytesToHex(secret));
-        }
-        catch { }
-
-        return secret;
-    }
-
-    private static string B64Url(byte[] bytes) =>
-        Convert.ToBase64String(bytes).Replace('+', '-').Replace('/', '_').TrimEnd('=');
-
-    private static string BuildConsoleToken(byte[] secret)
-    {
-        string header = B64Url(Encoding.UTF8.GetBytes("{\"alg\":\"HS256\",\"typ\":\"JWT\"}"));
-        string payload = B64Url(Encoding.UTF8.GetBytes(
-            "{\"UserId\":\"0\",\"Username\":\"Server\",\"role\":\"Access\"," +
-            "\"is_verified\":\"True\",\"is_member\":\"True\",\"server_id\":\"-1\"," +
-            "\"Policy\":[\"offline\",\"play_offline\",\"server_access_pre_alpha\"," +
-            "\"game_access_public\",\"server_owner\",\"debug_features\"," +
-            "\"database_admin\",\"reuse_refresh_tokens\"]," +
-            "\"exp\":9999999999,\"iss\":\"AltaWebAPI\",\"aud\":\"AltaClient\"}"));
-        string sigInput = $"{header}.{payload}";
-        byte[] sig;
-        using (var hmac = new HMACSHA256(secret)) 
-            sig = hmac.ComputeHash(Encoding.UTF8.GetBytes(sigInput));
-        
-        return $"{header}.{payload}.{B64Url(sig)}";
-    }
-
-    internal static void EnsureConsoleToken()
-    {
-        try
-        {
-            string tokenPath = Path.Combine(TavernDirectories.ModdingTavern, "console_token.txt");
-            if (File.Exists(tokenPath) && File.Exists(ServerSecretPath)) return;
-            byte[] secret = ServerSecret;
-            Directory.CreateDirectory(Path.GetDirectoryName(tokenPath));
-            File.WriteAllText(tokenPath, BuildConsoleToken(secret));
-        }
-        catch { }
-    }
-
-    [HarmonyPatch(typeof(ServerConsoleManager), nameof(ServerConsoleManager.ValidateConsoleToken)), HarmonyPrefix]
-    public static bool ValidateConsoleToken(JwtSecurityToken token, ref Task<bool> __result)
-    {
-        bool hasOwnerClaim = token.Claims.Any(c => c.Type == "Policy" && c.Value == "server_owner");
-        if (!hasOwnerClaim)
-        {
-            __result = Task.FromResult(false);
-            return false;
-        }
-
-        byte[] secret = ServerSecret;
-        if (secret == null)
-        {
-            __result = Task.FromResult(false);
-            return false;
-        }
-
-        try
-        {
-            string raw = token.Claims.FirstOrDefault(c => c.Type == "raw")?.Value;
-            if (raw == null)
-            {
-                __result = Task.FromResult(false);
-                return false;
-            }
-
-            int lastDot = raw.LastIndexOf('.');
-            string sigInput = raw.Substring(0, lastDot);
-            string sigClaim = raw.Substring(lastDot + 1);
-
-            byte[] expectedSig;
-            using (var hmac = new HMACSHA256(secret))
-                expectedSig = hmac.ComputeHash(Encoding.UTF8.GetBytes(sigInput));
-
-            __result = Task.FromResult(string.Equals(sigClaim.Trim(), B64Url(expectedSig), StringComparison.Ordinal));
-        }
-        catch
-        {
-            __result = Task.FromResult(false);
-        }
-
-        return false;
-    }
-
-    #endregion
-
     #region ServerPlayerConnectionHandlerOld
 
     [HarmonyPatch(typeof(ServerPlayerConnectionHandlerOld), nameof(ServerPlayerConnectionHandlerOld.CheckIfPlayerIsAllowedCustom)), HarmonyPrefix]
-    public static bool ValidateConsoleToken(string tokenString, int playerId, ref Task<ServerPlayerConnectionHandlerOld.PlayerJoinResult> __result)
+    public static bool CheckJoinToken(string tokenString, int playerId, ref Task<ServerPlayerConnectionHandlerOld.PlayerJoinResult> __result)
+    {
+        __result = Task.FromResult(JoinResult(tokenString, playerId));
+        return false;
+    }
+
+    private static ServerPlayerConnectionHandlerOld.PlayerJoinResult JoinResult(string tokenString, int playerId)
     {
         try
         {
-            var jwtToken = JWTUtility.CreateFromString(tokenString);
-            var value = jwtToken.Claims.First(c => c.Type == "Username").Value;
+            var claims = JWTUtility.CreateFromString(tokenString).Claims.ToList();
+            var ids = claims.Where(c => c.Type == "UserId").ToList();
+            var names = claims.Where(c => c.Type == "Username").ToList();
 
-            if (int.Parse(jwtToken.Claims.First(c => c.Type == "UserId").Value) != playerId)
+            if (ids.Count != 1 || names.Count != 1)
+                return ServerPlayerConnectionHandlerOld.PlayerJoinResult.CreateDeniedResult("Error reading token");
+
+            if (!int.TryParse(ids[0].Value, NumberStyles.None, CultureInfo.InvariantCulture, out var tokenId) || tokenId != playerId)
             {
-                __result = Task.FromResult(ServerPlayerConnectionHandlerOld.PlayerJoinResult.CreateDeniedResult("Token was for a different user"));
+                TavernLogger.Warn($"Join denied: the token is for user {ids[0].Value}, the join asked for {playerId}");
+                return ServerPlayerConnectionHandlerOld.PlayerJoinResult.CreateDeniedResult("Token was for a different user");
             }
 
-            var result = new UserInfoAndRole(new UserInfo(playerId, value), UserRolesUtility.GetRolesFromIdentityToken(tokenString));
-            __result = Task.FromResult(ServerPlayerConnectionHandlerOld.PlayerJoinResult.CreateSuccessResult(result));
+            var username = names[0].Value;
+            var user = new UserInfoAndRole(new UserInfo(playerId, username), MemberStatusFromRoles(username));
+            return ServerPlayerConnectionHandlerOld.PlayerJoinResult.CreateSuccessResult(user);
         }
         catch (Exception)
         {
-            __result = Task.FromResult(ServerPlayerConnectionHandlerOld.PlayerJoinResult.CreateDeniedResult("Error reading token"));
+            return ServerPlayerConnectionHandlerOld.PlayerJoinResult.CreateDeniedResult("Error reading token");
         }
+    }
 
-        return false;
+    // The client writes its own join token, so its Policy claims prove nothing. The game's
+    // statuses come from users.json roles named like the claims the game reads.
+    internal static PlayerSubscriberStatus MemberStatusFromRoles(string username)
+    {
+        var roles = Roles.GetRoles(username);
+        bool Has(string role) => roles.Any(r => string.Equals(r, role, StringComparison.OrdinalIgnoreCase));
+
+        if (Has("dev")) return PlayerSubscriberStatus.Developer;
+        if (Has("mod")) return PlayerSubscriberStatus.AltaMod;
+        if (Has("supporter")) return PlayerSubscriberStatus.Subscriber;
+        return PlayerSubscriberStatus.None;
     }
 
     #endregion

@@ -20,7 +20,9 @@ using Alta.StatSystem;
 using Alta.Utilities;
 using ATT.PlayerStates;
 using NLog;
+using Newtonsoft.Json;
 using TavernLib.Backend.Api;
+using TavernLib.Backend.Server.Configs;
 using TavernLib.Services;
 using UnityEngine;
 using Inventory = Alta.Console.Commands.Inventory;
@@ -187,17 +189,29 @@ public static class PlayerCommandModule
 
 		private static Player lastPlayer;
 
+		public class PathXp
+		{
+			[JsonProperty("player")] public string Player { get; set; }
+			[JsonProperty("path")] public string Path { get; set; }
+			[JsonProperty("level")] public uint Level { get; set; }
+			[JsonProperty("xp")] public uint Experience { get; set; }
+			[JsonProperty("next_level_at")] public uint NextLevelAt { get; set; }
+
+			public override string ToString() => $"{Player}  {Path}  level {Level}  {Experience} xp, next level at {NextLevelAt}";
+		}
+
+		public class SkillRow
+		{
+			[JsonProperty("index")] public int Index { get; set; }
+			[JsonProperty("path")] public string Path { get; set; }
+			[JsonProperty("name")] public string Name { get; set; }
+
+			public override string ToString() => $"{Index}  {Path}  {Name}";
+		}
+
 		[Command("list", "List the available paths")]
 		[ServerOnly]
-		private static void List()
-		{
-			int length = typeof(ProgressionPath).GetEnumValues().Length;
-			logger.Debug("Available Paths:");
-			for (int i = 0; i < length; i++)
-			{
-				logger.Debug("  - {0}", (ProgressionPath)i);
-			}
-		}
+		private static Lines<string> List() => new(Enum.GetNames(typeof(ProgressionPath)));
 
 		[Command("pathxp", "Gain Experience on a Profession Path")]
 		[ServerOnly]
@@ -265,24 +279,31 @@ public static class PlayerCommandModule
 
 		[Command("checkallxp", "List all paths and their xp")]
 		[ServerOnly]
-		private static void CheckAllXP(PlayerList players)
+		private static Lines<PathXp> CheckAllXP(PlayerList players)
 		{
-			int length = typeof(ProgressionPath).GetEnumValues().Length;
+			var rows = new List<PathXp>();
 			foreach (Player player in players)
 			{
-				for (int i = 0; i < length; i++)
+				foreach (ProgressionPath path in Enum.GetValues(typeof(ProgressionPath)))
 				{
-					ProgressionPath progressionPath = (ProgressionPath)i;
-					uint num = 0u;
-					uint currentLevel = 0u;
-					if (player.ProgressionManager.PathExperiences.TryGetValue(progressionPath, out var value))
+					uint xp = 0u;
+					uint level = 0u;
+					if (player.ProgressionManager.PathExperiences.TryGetValue(path, out var value))
 					{
-						num = value.CurrentExperience;
-						currentLevel = value.CurrentLevel;
+						xp = value.CurrentExperience;
+						level = value.CurrentLevel;
 					}
-					logger.Debug("Player {0} on {1} has {2} xp, next level at {3} xp", player.UserInfo.Username, progressionPath, num, GlobalSettings<ProgressionSettings>.Instance.ExperiencePerLevel(currentLevel));
+					rows.Add(new PathXp
+					{
+						Player = player.UserInfo.Username,
+						Path = path.ToString(),
+						Level = level,
+						Experience = xp,
+						NextLevelAt = GlobalSettings<ProgressionSettings>.Instance.ExperiencePerLevel(level),
+					});
 				}
 			}
+			return new Lines<PathXp>(rows);
 		}
 
 		[Command("clearpath", "Clear all progress in a given path")]
@@ -315,69 +336,60 @@ public static class PlayerCommandModule
 		}
 
 		[Command("showskills", "Show available skills for player")]
-		private static void ShowAvailableSkills(Player player)
+		private static Lines<SkillRow> ShowAvailableSkills(Player player)
 		{
 			available.Clear();
 			lastPlayer = player;
-			int num = 0;
-			logger.Trace("Available skills for {0}", player.UserInfo.Username);
-			int length = typeof(ProgressionPath).GetEnumValues().Length;
-			for (int i = 0; i < length; i++)
+			var rows = new List<SkillRow>();
+			foreach (ProgressionPath path in Enum.GetValues(typeof(ProgressionPath)))
 			{
-				ProgressionPath progressionPath = (ProgressionPath)i;
-				ProfessionSkillTree professionTree = ProfessionSkillTree.GetProfessionTree(progressionPath);
-				logger.Trace("{0} skills:", progressionPath);
-				if (player.ProgressionManager.PathExperiences.TryGetValue(progressionPath, out var value))
+				ProfessionSkillTree tree = ProfessionSkillTree.GetProfessionTree(path);
+				if (tree == null)
 				{
-					foreach (ProgressionSlot slot in professionTree.Slots)
-					{
-						if (value.IsSlotAvailable(slot) == SkillStatus.Allowed)
-						{
-							available[num] = slot;
-							logger.Trace("{0} {1}", num, slot.Name);
-							num++;
-						}
-					}
 					continue;
 				}
-				foreach (ProgressionSlot slot2 in professionTree.Slots)
+				player.ProgressionManager.PathExperiences.TryGetValue(path, out var value);
+				foreach (ProgressionSlot slot in tree.Slots)
 				{
-					if (slot2.Cost == 0 && slot2.Dependencies.Count == 0)
+					bool open = value != null ? value.IsSlotAvailable(slot) == SkillStatus.Allowed : slot.Cost == 0 && slot.Dependencies.Count == 0;
+					if (!open)
 					{
-						available[num] = slot2;
-						logger.Trace("{0} {1}", num, slot2.Name);
-						num++;
+						continue;
 					}
+					available[rows.Count] = slot;
+					rows.Add(new SkillRow { Index = rows.Count, Path = path.ToString(), Name = slot.Name });
 				}
 			}
+			return new Lines<SkillRow>(rows);
 		}
 
 		[Command("buyskill", "Buy specified skill")]
-		private static void BuySkill(int slotIndex, bool isConsumingExperience = true)
+		private static string BuySkill(int slotIndex, bool isConsumingExperience = true)
 		{
-			if (lastPlayer != null)
+			if (lastPlayer == null)
 			{
-				if (available.TryGetValue(slotIndex, out var value))
-				{
-					lastPlayer.ProgressionManager.UnlockSlot(value, isConsumingExperience);
-					logger.Trace("{0} skill bought for {1}", value.Name, lastPlayer.UserInfo.Username);
-				}
+				CommandService.ThrowError("Run player progression showskills first");
 			}
-			else
+			if (!available.TryGetValue(slotIndex, out var slot))
 			{
-				logger.Trace("Please user showskills first");
+				CommandService.ThrowError("No skill {0} in the last showskills list", slotIndex);
 			}
+			lastPlayer.ProgressionManager.UnlockSlot(slot, isConsumingExperience);
+			return $"Bought {slot.Name} for {lastPlayer.UserInfo.Username}";
 		}
 
 		[Command("offlinelevels", "Give levels to players even if they are offline")]
 		[Alias(new string[] { "offlvl", "lvl" })]
-		private static async Task AddOfflineLevels(UserInfoAccess userInfo, ProgressionPath path, int levels)
+		private static async Task<string> AddOfflineLevels(UserInfoAccess userInfo, ProgressionPath path, int levels)
 		{
-			if (await userInfo.IsValid())
+			if (!await userInfo.IsValid())
 			{
-				int playerID = await userInfo.GetIdentifier();
-				OfflinePlayerProgressionHandler.instance.ModifySkills(playerID, path, levels);
+				CommandService.ThrowError("No user {0}", userInfo.ProvidedArgument());
 			}
+			int playerID = await userInfo.GetIdentifier();
+			OfflinePlayerProgressionHandler.instance.ModifySkills(playerID, path, levels);
+			string name = await userInfo.GetUsername();
+			return Player.GetPlayer(playerID) != null ? $"Gave {name} {levels} level(s) on {path}" : $"{name} gets {levels} level(s) on {path} on their next join";
 		}
 
 		[Command("printofflinelevels", "Give levels to players even if they are offline")]
@@ -429,6 +441,99 @@ public static class PlayerCommandModule
 		{
 			player.Kick(reason);
 		}
+	}
+
+	[ServerOnly]
+	[Command("ban", "Blacklists a name and its user id, then kicks anyone playing under that name")]
+	private static string Ban(string username, string reason = "Banned")
+	{
+		ulong? userId = null;
+		ChangeUsers(config =>
+		{
+			var blacklist = Lists(config.Blacklist ??= new UserConfig.ListConfig());
+			var changed = false;
+			if (!blacklist.Usernames.Any(name => string.Equals(name, username, StringComparison.OrdinalIgnoreCase)))
+			{
+				blacklist.Usernames.Add(username);
+				changed = true;
+			}
+			if (config.Users.TryGetValue(username.ToLowerInvariant(), out var user) && user != null)
+			{
+				userId = user.UserId;
+				if (!blacklist.UserIds.Contains(user.UserId))
+				{
+					blacklist.UserIds.Add(user.UserId);
+					changed = true;
+				}
+			}
+			return changed;
+		});
+
+		var kicked = 0;
+		foreach (Player player in Player.AllPlayers.ToList())
+		{
+			if (!string.Equals(player.ConnectionToRemotePlayer?.UserInfo?.Username, username, StringComparison.OrdinalIgnoreCase)) continue;
+			player.Kick(reason);
+			kicked++;
+		}
+
+		return $"Banned {username}" + (userId.HasValue ? $" (user id {userId})" : " (no account on this server yet)") + $", kicked {kicked}";
+	}
+
+	[ServerOnly]
+	[Command("unban", "Takes a name and its user id off the blacklist")]
+	private static string Unban(string username)
+	{
+		var removed = 0;
+		ChangeUsers(config =>
+		{
+			if (config.Blacklist == null) return false;
+			var blacklist = Lists(config.Blacklist);
+			removed += blacklist.Usernames.RemoveAll(name => string.Equals(name, username, StringComparison.OrdinalIgnoreCase));
+			if (config.Users.TryGetValue(username.ToLowerInvariant(), out var user) && user != null)
+				removed += blacklist.UserIds.RemoveAll(id => id == user.UserId);
+			return removed > 0;
+		});
+
+		return removed == 0 ? $"{username} was not on the blacklist" : $"Unbanned {username}";
+	}
+
+	[ServerOnly]
+	[Command("banlist", "Shows the blacklist")]
+	private static string BanList()
+	{
+		UserConfig config = null;
+		try
+		{
+			config = TavernServices.GetService<TavernManager>().UserConfig.Read();
+		}
+		catch (Exception)
+		{
+			CommandService.ThrowError("users.json can't be read");
+		}
+
+		var blacklist = Lists(config.Blacklist ?? new UserConfig.ListConfig());
+		return $"Names: {string.Join(", ", blacklist.Usernames)}\nUser ids: {string.Join(", ", blacklist.UserIds)}\nIPs: {string.Join(", ", blacklist.Ips)}";
+	}
+
+	private static void ChangeUsers(Func<UserConfig, bool> change)
+	{
+		try
+		{
+			TavernServices.GetService<TavernManager>().UserConfig.Update(change);
+		}
+		catch (Exception e) when (e is System.IO.IOException or System.IO.InvalidDataException or UnauthorizedAccessException or Newtonsoft.Json.JsonException)
+		{
+			CommandService.ThrowError("users.json can't be read or written, nothing changed");
+		}
+	}
+
+	private static UserConfig.ListConfig Lists(UserConfig.ListConfig list)
+	{
+		list.Usernames ??= new List<string>();
+		list.UserIds ??= new List<ulong>();
+		list.Ips ??= new List<string>();
+		return list;
 	}
 
 	[ServerOnly]
@@ -497,10 +602,7 @@ public static class PlayerCommandModule
 
 	[ServerOnly]
 	[Command("getdamagemulti", "Gets the PlayerDamageTakenMultiplier value in Server Settings")]
-	private static void GetDamageMultiplier_Command()
-	{
-		logger.Trace("PlayerDamageTakenMultiplier = " + ServerHandler.Current.ServerConfig.Settings.PlayerDamageTakenMultiplier);
-	}
+	private static float GetDamageMultiplier_Command() => ServerHandler.Current.ServerConfig.Settings.PlayerDamageTakenMultiplier;
 
 	[ServerOnly]
 	[Command("cripple", "Cripples a player")]
@@ -527,24 +629,33 @@ public static class PlayerCommandModule
 	[ServerOnly]
 	[Command("teleport", "Teleports a player to another")]
 	[Alias(new string[] { "tp" })]
-	private static void Teleport(PlayerList players, Player targetPlayer)
+	private static string Teleport(PlayerList players, Player targetPlayer)
 	{
 		if (targetPlayer.PlayerController == null)
 		{
-			logger.Trace("Target player has no controller");
-			return;
+			CommandService.ThrowError("{0} has no body to teleport to", targetPlayer.UserInfo.Username);
 		}
-		logger.Trace("Teleporting " + players.CountOrName() + " to " + targetPlayer.UserInfo.Username + ".");
 		Vector3 forward = targetPlayer.PlayerController.Head.forward;
 		forward.y = 0f;
 		forward.Normalize();
 		Vector3 position = targetPlayer.PlayerController.Head.position;
 		position.y = targetPlayer.PlayerController.transform.position.y;
 		position += forward * 2f;
+		var moved = new List<string>();
 		foreach (Player player in players)
 		{
-			player.PlayerController?.ForceTeleportTo(position);
+			if (player.PlayerController == null)
+			{
+				continue;
+			}
+			player.PlayerController.ForceTeleportTo(position);
+			moved.Add(player.UserInfo.Username);
 		}
+		if (moved.Count == 0)
+		{
+			CommandService.ThrowError("None of them has a body to teleport");
+		}
+		return $"Teleported {string.Join(", ", moved)} to {targetPlayer.UserInfo.Username}";
 	}
 
 	[Command("god-mode", "Makes a player invulnerable")]

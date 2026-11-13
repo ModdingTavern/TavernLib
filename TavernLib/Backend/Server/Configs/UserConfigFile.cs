@@ -2,14 +2,17 @@
 using System.Collections.Generic;
 using System.Linq;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace TavernLib.Backend.Server.Configs;
 
+// Keys TavernLib doesn't know (the launcher's, another tool's) are kept in Extra and written back.
 public class UserConfig
 {
     [JsonProperty("users")] public Dictionary<string, User> Users { get; set; } = new();
     [JsonProperty("whitelist")] public ListConfig Whitelist { get; set; } = new();
     [JsonProperty("blacklist")] public ListConfig Blacklist { get; set; } = new();
+    [JsonExtensionData] private IDictionary<string, JToken> Extra { get; set; }
 
     public class User
     {
@@ -17,6 +20,7 @@ public class UserConfig
         [JsonProperty("token")] public string Token { get; set; }
         [JsonProperty("registered_from")] public string RegisteredFrom { get; set; }
         [JsonProperty("roles")] public List<string> Roles { get; set; } = [];
+        [JsonExtensionData] private IDictionary<string, JToken> Extra { get; set; }
 
         public bool HasRole(string role) =>
             Roles != null && Roles.Any(r => string.Equals(r, role, StringComparison.OrdinalIgnoreCase));
@@ -30,6 +34,7 @@ public class UserConfig
         [JsonProperty("usernames")] public List<string> Usernames { get; set; } = [];
         [JsonProperty("ips")] public List<string> Ips { get; set; } = [];
         [JsonProperty("user_ids")] public List<ulong> UserIds { get; set; } = [];
+        [JsonExtensionData] private IDictionary<string, JToken> Extra { get; set; }
     }
 }
 

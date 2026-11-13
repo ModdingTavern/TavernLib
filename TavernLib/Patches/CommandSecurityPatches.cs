@@ -21,9 +21,9 @@ public class CommandSecurityPatches
     }*/
 
     [HarmonyPatch(typeof(CommandSync), nameof(CommandSync.RouteCommand)), HarmonyPrefix]
-    public static bool CancelRouteCommand(string command) // Unsure of if this is necessary
+    public static bool CancelRouteCommand() // Unsure of if this is necessary
     {
-        TavernLogger.Msg($"Cancelling RouteCommand attempt: {command}");
+        TavernLogger.Msg("Cancelling a routed command");
         return false;
     }
 

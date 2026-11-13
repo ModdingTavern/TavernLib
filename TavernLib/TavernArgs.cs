@@ -8,4 +8,5 @@ public static class TavernArgs
     public const string DevServerPort = "/dev_server_port";
     public const string QuestScene = "/questScene";
     public const string TutorialScene = "/tutorialScene";
+    public const string ListingApi = "/listing_api";
 }

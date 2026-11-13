@@ -1,13 +1,18 @@
 ﻿using System;
+using System.Globalization;
 using System.Linq;
+using System.Net;
+using System.Reflection;
 using System.Threading.Tasks;
 using Alta.Api.DataTransferModels.Converters;
 using Alta.Networking;
 using Alta.Networking.Servers;
+using Alta.NetworkingTransport.Kcp;
 using Alta.Serialization;
 using HarmonyLib;
-using Newtonsoft.Json;
 using TavernLib.Backend.Api;
+using TavernLib.Backend.Auth;
+using TavernLib.Backend.Server.Configs;
 using TavernLib.Services;
 
 namespace TavernLib.Patches;
@@ -24,7 +29,7 @@ public static class PlayerJoinFilter
 
     private static async void FilterJoinRequest(Connection connection, Stream stream)
     {
-        TavernLogger.Msg($"Filtering join request for user at IP {connection.IpAddress}");
+        TavernLogger.Msg($"Filtering join request for user at IP {AddressOf(connection)}");
 
         try
         {
@@ -41,7 +46,6 @@ public static class PlayerJoinFilter
         {
             TavernLogger.Error($"Error when filtering join request! {e}");
             await ServerPlayerConnectionHandlerOld.PlayerDenied(connection, "Error when checking authenticity");
-            throw;
         }
     }
 
@@ -53,17 +57,35 @@ public static class PlayerJoinFilter
             var requestJoinMessage = new RequestJoinMessage();
             requestJoinMessage.Serialize(connection, readingStream);
 
-            TavernLogger.Msg($"User trying to join with JWT {requestJoinMessage.UserCredentials}");
+            var claims = JWTUtility.CreateFromString(requestJoinMessage.UserCredentials, true).Claims.ToList();
+            var tavernTokens = claims.Where(claim => claim.Type == "TavernToken").ToList();
+            var ids = claims.Where(claim => claim.Type == "UserId").ToList();
+            var names = claims.Where(claim => claim.Type == "Username").ToList();
 
-            var token = JWTUtility.CreateFromString(requestJoinMessage.UserCredentials, true);
-            var tavernToken = token.Claims.FirstOrDefault(claim => claim.Type == "TavernToken")?.Value;
-            var id = ulong.Parse(token.Claims.FirstOrDefault(claim => claim.Type == "UserId")?.Value ?? "0");
-            var username = token.Claims.FirstOrDefault(claim => claim.Type == "Username")?.Value ?? "";
+            if (tavernTokens.Count == 1 && ids.Count == 1 && names.Count == 1 &&
+                ulong.TryParse(ids[0].Value, NumberStyles.None, CultureInfo.InvariantCulture, out var id))
+            {
+                // Refused here rather than in CheckApproved, which logs the whole join token when it refuses.
+                if (requestJoinMessage.PlayerId < 0 || (ulong)requestJoinMessage.PlayerId != id)
+                {
+                    TavernLogger.Warn($"Join denied for {names[0].Value}: the token is for user {id}, the join asked for {requestJoinMessage.PlayerId}");
+                    await ServerPlayerConnectionHandlerOld.PlayerDenied(connection, "Token was for a different user");
+                    return false;
+                }
 
-            var userConfig = TavernServices.GetService<TavernManager>().UserConfig;
-            userConfig.ReadFromFile();
-            var users = userConfig.LastRead.Users;
-            if (users.TryGetValue(username.ToLowerInvariant(), out var user) && user.UserId == id && !string.IsNullOrEmpty(user.Token) && user.Token == tavernToken) return true;
+                var manager = TavernServices.GetService<TavernManager>();
+                var config = manager.UserConfig.Read();
+                if (config.Users.TryGetValue(names[0].Value.ToLowerInvariant(), out var user) && user != null && user.UserId == id && !string.IsNullOrEmpty(user.Token) && user.Token == tavernTokens[0].Value)
+                {
+                    // 1762 checks these too, but a client can skip 1762 and come straight here.
+                    var refusal = Refusal(manager, config, names[0].Value, user, AddressOf(connection));
+                    if (refusal == null) return true;
+
+                    TavernLogger.Msg($"Join denied for {names[0].Value}: {refusal}");
+                    await ServerPlayerConnectionHandlerOld.PlayerDenied(connection, refusal);
+                    return false;
+                }
+            }
 
             await ServerPlayerConnectionHandlerOld.PlayerDenied(connection, "Data mismatch or account not found");
             return false;
@@ -72,8 +94,53 @@ public static class PlayerJoinFilter
         catch (Exception e)
         {
             TavernLogger.Error($"Error in FilterInvalidTokens! {e}");
-            throw;
+            await ServerPlayerConnectionHandlerOld.PlayerDenied(connection, "Error when checking authenticity");
+            return false;
         }
+    }
+
+    // server_settings.json is read afresh too, so whitelist_enabled applies with no restart, on a
+    // launcher-run server as well.
+    private static string Refusal(TavernManager manager, UserConfig config, string username, UserConfig.User user, string address)
+    {
+        if (JoinRules.IsBlacklisted(config, username, user.UserId, address)) return "Blacklisted";
+
+        ServerSettings settings;
+        try
+        {
+            settings = manager.ServerConfig.Read();
+        }
+        catch (Exception)
+        {
+            return "The server can't read its settings right now";
+        }
+
+        if (JoinRules.WhitelistOn(settings, config) && !JoinRules.IsWhitelisted(config, username, user.UserId, address, user.RegisteredFrom))
+            return "Not whitelisted";
+
+        return null;
+    }
+
+    private static readonly FieldInfo KcpInternalConnection = AccessTools.Field(typeof(KcpServerConnection), "internalConnection");
+
+    // Connection.IpAddress is never set on a server; the address lives on kcp2k's own connection.
+    internal static string AddressOf(Connection connection)
+    {
+        try
+        {
+            if (connection?.TransportConnection is KcpServerConnection wrapper &&
+                KcpInternalConnection?.GetValue(wrapper) is kcp2k.KcpConnection kcp &&
+                kcp.GetRemoteEndPoint() is IPEndPoint endPoint)
+            {
+                var address = endPoint.Address;
+                return (address.IsIPv4MappedToIPv6 ? address.MapToIPv4() : address).ToString();
+            }
+        }
+        catch (Exception)
+        {
+        }
+
+        return null;
     }
 
     private static async Task<bool> FilterFlyCam(Connection connection, Stream stream)
@@ -90,10 +157,9 @@ public static class PlayerJoinFilter
                 var token = JWTUtility.CreateFromString(requestJoinMessage.UserCredentials, true);
                 
                 var username = token.Claims.FirstOrDefault(c => c.Type == "Username")?.Value ?? "";
-                var users = TavernServices.GetService<TavernManager>().UserConfig;
-                users.ReadFromFile(); // see FilterInvalidTokens for why this can't be skipped
-                
-                if (users.TryGetUser(username, out var user) && user.CanEnterFlyMode)
+                var users = TavernServices.GetService<TavernManager>().UserConfig.Read().Users;
+
+                if (users.TryGetValue(username.ToLowerInvariant(), out var user) && user != null && user.CanEnterFlyMode)
                 {
                     TavernLogger.Msg($"User {username} allowed unorthodox role via role");
                     return true;
@@ -115,8 +181,8 @@ public static class PlayerJoinFilter
     }
 
     [HarmonyPatch(typeof(ConfirmJoinMessage), MethodType.Constructor, [typeof(bool), typeof(bool), typeof(ClientJoinResult), typeof(JoinedServerInfo), typeof(string)]), HarmonyPostfix]
-    public static void LogDisconnectAttempts(bool isAllowed, bool isDoingPrerequisites, ClientJoinResult joinResult, JoinedServerInfo serverInfo, string error, ref ConfirmJoinMessage __instance)
+    public static void LogDisconnectAttempts(bool isAllowed, string error)
     {
-        TavernLogger.Warn($"ConfirmJoinMessage created {JsonConvert.SerializeObject(__instance, Formatting.Indented)}");
+        if (!isAllowed) TavernLogger.Msg($"Join refused: {error}");
     }
 }
